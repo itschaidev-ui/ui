@@ -1,27 +1,17 @@
 "use client"
 
-import React from "react"
-
-import { type ButtonHTMLAttributes, forwardRef, useEffect, useRef, useState } from "react"
-import { cn } from "@/lib/utils"
+import type { ButtonHTMLAttributes, MouseEventHandler } from "react"
+import React, { forwardRef, useEffect, useRef, useState } from "react"
 import "./sparkle-button.css"
 
 export interface SparkleButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  /** The text to display on the button */
   text?: string
-  /** The text to display while hovering/focused */
   hoverText?: string
-  /** The text to display when the button is in a loading state */
   activeText?: string
-  /** The highlight hue in degrees (0-360). Default is 210 (blue) */
   hue?: number
-  /** Size variant */
   size?: "sm" | "md" | "lg"
-  /** Loading state duration in milliseconds */
   loadingDuration?: number
-  /** Enables hover text transition state */
   enableHoverText?: boolean
-  /** Enables temporary loading state on click */
   enableLoadingState?: boolean
 }
 
@@ -60,7 +50,7 @@ const SparkleButton = forwardRef<HTMLButtonElement, SparkleButtonProps>(
       }
     }, [])
 
-    const handleClick: React.MouseEventHandler<HTMLButtonElement> = (event) => {
+    const handleClick: MouseEventHandler<HTMLButtonElement> = (event) => {
       if (!enableLoadingState) {
         onClick?.(event)
         return
@@ -95,11 +85,13 @@ const SparkleButton = forwardRef<HTMLButtonElement, SparkleButtonProps>(
       lg: "sparkle-btn--lg",
     }
 
+    const classes = ["sparkle-btn", sizeClasses[size], className].filter(Boolean).join(" ")
+
     return (
       <div className="sparkle-btn-wrapper">
         <button
           ref={ref}
-          className={cn("sparkle-btn", sizeClasses[size], className)}
+          className={classes}
           data-state={visualState}
           style={{ "--highlight-color-hue": `${hue}deg` } as React.CSSProperties}
           onClick={handleClick}
@@ -127,12 +119,7 @@ const SparkleButton = forwardRef<HTMLButtonElement, SparkleButtonProps>(
           }}
           {...props}
         >
-          <svg
-            className="sparkle-btn__icon"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
+          <svg className="sparkle-btn__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -143,33 +130,21 @@ const SparkleButton = forwardRef<HTMLButtonElement, SparkleButtonProps>(
           <div className="sparkle-btn__text-wrapper">
             <span className="sparkle-btn__text sparkle-btn__text--default" aria-hidden="true">
               {text.split("").map((char, i) => (
-                <span
-                  key={`${char}-${i}`}
-                  className="sparkle-btn__letter"
-                  style={{ animationDelay: `${i * 0.08}s` }}
-                >
+                <span key={`${char}-${i}`} className="sparkle-btn__letter" style={{ animationDelay: `${i * 0.08}s` }}>
                   {char}
                 </span>
               ))}
             </span>
             <span className="sparkle-btn__text sparkle-btn__text--active" aria-hidden="true">
               {activeText.split("").map((char, i) => (
-                <span
-                  key={`${char}-${i}`}
-                  className="sparkle-btn__letter"
-                  style={{ animationDelay: `${i * 0.08}s` }}
-                >
+                <span key={`${char}-${i}`} className="sparkle-btn__letter" style={{ animationDelay: `${i * 0.08}s` }}>
                   {char}
                 </span>
               ))}
             </span>
             <span className="sparkle-btn__text sparkle-btn__text--hover" aria-hidden="true">
               {hoverText.split("").map((char, i) => (
-                <span
-                  key={`${char}-${i}`}
-                  className="sparkle-btn__letter"
-                  style={{ animationDelay: `${i * 0.08}s` }}
-                >
+                <span key={`${char}-${i}`} className="sparkle-btn__letter" style={{ animationDelay: `${i * 0.08}s` }}>
                   {char}
                 </span>
               ))}
@@ -179,7 +154,7 @@ const SparkleButton = forwardRef<HTMLButtonElement, SparkleButtonProps>(
         </button>
       </div>
     )
-  }
+  },
 )
 
 SparkleButton.displayName = "SparkleButton"

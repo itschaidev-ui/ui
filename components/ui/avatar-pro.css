@@ -1,0 +1,246 @@
+.ui-avatar-shell {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+}
+
+.ui-avatar-shell--expandable {
+  gap: 0;
+}
+
+.ui-avatar {
+  --avatar-size: 44px;
+  --avatar-radius: 999px;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--avatar-size);
+  height: var(--avatar-size);
+  border-radius: var(--avatar-radius);
+  overflow: hidden;
+  background: linear-gradient(135deg, #1d1d1d, #111111);
+  color: #f3f3f3;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  user-select: none;
+  transition: transform 0.2s ease, box-shadow 0.25s ease;
+}
+
+.ui-avatar--sm {
+  --avatar-size: 34px;
+}
+
+.ui-avatar--md {
+  --avatar-size: 44px;
+}
+
+.ui-avatar--lg {
+  --avatar-size: 58px;
+}
+
+.ui-avatar--circle {
+  --avatar-radius: 999px;
+}
+
+.ui-avatar--rounded {
+  --avatar-radius: 14px;
+}
+
+.ui-avatar--square {
+  --avatar-radius: 8px;
+}
+
+.ui-avatar--ring {
+  box-shadow:
+    0 0 0 2px rgba(124, 96, 255, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.ui-avatar--ring::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.ui-avatar__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ui-avatar__fallback {
+  font-size: calc(var(--avatar-size) * 0.34);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.ui-avatar__status {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  width: calc(var(--avatar-size) * 0.26);
+  height: calc(var(--avatar-size) * 0.26);
+  border-radius: 999px;
+  border: 2px solid #050505;
+  background: #4ade80;
+}
+
+.ui-avatar__status--online {
+  background: #4ade80;
+}
+
+.ui-avatar__status--away {
+  background: #f59e0b;
+}
+
+.ui-avatar__status--busy {
+  background: #ef4444;
+}
+
+.ui-avatar__status--offline {
+  background: #737373;
+}
+
+.ui-avatar__expanded {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  overflow: hidden;
+  width: 0;
+  opacity: 0;
+  margin-left: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  min-height: calc(var(--avatar-size) - 2px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(135deg, rgba(23, 23, 23, 0.96), rgba(10, 10, 10, 0.96));
+  color: #efefef;
+  padding: 0;
+  transition:
+    width 0.26s ease,
+    opacity 0.2s ease,
+    margin-left 0.24s ease,
+    padding 0.24s ease;
+}
+
+.ui-avatar-shell--expandable:hover .ui-avatar__expanded {
+  width: 220px;
+  opacity: 1;
+  margin-left: 10px;
+  padding: 10px 12px;
+  pointer-events: auto;
+}
+
+.ui-avatar-shell--expandable:hover .ui-avatar {
+  transform: scale(1.04);
+}
+
+.ui-avatar__expanded-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.ui-avatar__expanded-description {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #bcbcbc;
+  white-space: normal;
+}
+
+.ui-avatar__expanded-image {
+  width: 100%;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.ui-avatar__expanded-button {
+  border: 1px solid #3b3b3b;
+  border-radius: 8px;
+  background: #141414;
+  color: #efefef;
+  font-size: 12px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.ui-avatar__expanded-custom {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ui-avatar__expanded-custom-image {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.ui-avatar__expanded-custom-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ui-avatar--anim-pulse {
+  animation: ui-avatar-pulse 1.8s ease-in-out infinite;
+}
+
+.ui-avatar--anim-float {
+  animation: ui-avatar-float 3.2s ease-in-out infinite;
+}
+
+.ui-avatar--anim-glow {
+  animation: ui-avatar-glow 2.4s ease-in-out infinite;
+}
+
+@keyframes ui-avatar-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+@keyframes ui-avatar-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes ui-avatar-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 rgba(124, 96, 255, 0),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 16px rgba(124, 96, 255, 0.42),
+      inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-avatar--anim-pulse,
+  .ui-avatar--anim-float,
+  .ui-avatar--anim-glow {
+    animation: none;
+  }
+}

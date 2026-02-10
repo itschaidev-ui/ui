@@ -1,197 +1,189 @@
 "use client"
 
 import { useState } from "react"
+import { Timer, TimerReset, Palette, Sparkles } from "lucide-react"
 import { SparkleButton } from "@/components/ui/sparkle-button"
+import { ElasticSlider } from "@/components/ui/elastic-slider"
 
-const variants = [
-  { label: "Blue", hue: 210, description: "Default" },
-  { label: "Cyan", hue: 185, description: "Cool" },
-  { label: "Emerald", hue: 155, description: "Natural" },
-  { label: "Amber", hue: 40, description: "Warm" },
-  { label: "Rose", hue: 340, description: "Bold" },
-  { label: "Violet", hue: 270, description: "Vivid" },
-]
-
-function CodeBlock({ code }: { code: string }) {
-  const [copied, setCopied] = useState(false)
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(code)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
-  return (
-    <div className="relative group rounded-xl border border-[#1e1e1e] bg-[#0a0a0a] overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#1e1e1e]">
-        <span className="text-xs font-mono text-[#555]">tsx</span>
-        <button
-          onClick={handleCopy}
-          className="text-xs font-mono text-[#555] hover:text-[#999] transition-colors"
-        >
-          {copied ? "Copied" : "Copy"}
-        </button>
-      </div>
-      <pre className="p-4 overflow-x-auto text-sm font-mono leading-relaxed text-[#a0a0a0]">
-        <code>{code}</code>
-      </pre>
-    </div>
-  )
+const defaults = {
+  text: "Get Started",
+  hoverText: "Ready?",
+  activeText: "Loading...",
+  hue: 210,
+  size: "md" as const,
+  loadingDuration: 2200,
 }
 
 export function ButtonShowcase() {
-  return (
-    <div className="min-h-screen bg-[#050505] text-[#e5e5e5]">
-      {/* Header */}
-      <header className="border-b border-[#141414]">
-        <div className="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded-lg bg-[#e5e5e5] flex items-center justify-center">
-              <svg className="w-4 h-4 text-[#050505]" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
-              </svg>
-            </div>
-            <span className="font-semibold tracking-tight text-[#e5e5e5]">sparkle/ui</span>
-          </div>
-          <nav className="flex items-center gap-6">
-            <a href="#components" className="text-sm text-[#777] hover:text-[#e5e5e5] transition-colors">
-              Components
-            </a>
-            <a href="#usage" className="text-sm text-[#777] hover:text-[#e5e5e5] transition-colors">
-              Usage
-            </a>
-            <a
-              href="https://github.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-[#777] hover:text-[#e5e5e5] transition-colors"
-            >
-              GitHub
-            </a>
-          </nav>
-        </div>
-      </header>
+  const [text, setText] = useState(defaults.text)
+  const [hoverText, setHoverText] = useState(defaults.hoverText)
+  const [activeText, setActiveText] = useState(defaults.activeText)
+  const [hue, setHue] = useState(defaults.hue)
+  const [size, setSize] = useState<"sm" | "md" | "lg">(defaults.size)
+  const [loadingDuration, setLoadingDuration] = useState(defaults.loadingDuration)
 
-      {/* Hero */}
-      <section className="max-w-5xl mx-auto px-6 pt-24 pb-20">
-        <div className="max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#1e1e1e] bg-[#0a0a0a] text-xs text-[#777] mb-6">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Open Source
-          </div>
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-balance text-[#f0f0f0] leading-[1.1]">
-            Beautiful buttons, crafted with intention.
-          </h1>
-          <p className="mt-5 text-lg text-[#666] leading-relaxed max-w-lg">
-            A collection of premium animated UI components for React. Copy, paste, and make them yours.
-          </p>
-          <div className="mt-10">
-            <SparkleButton text="Get Started" activeText="Loading" hue={210} />
-          </div>
+  const resetPreview = () => {
+    setText(defaults.text)
+    setHoverText(defaults.hoverText)
+    setActiveText(defaults.activeText)
+    setHue(defaults.hue)
+    setSize(defaults.size)
+    setLoadingDuration(defaults.loadingDuration)
+  }
+
+  return (
+    <div className="text-[#e5e5e5]">
+      <h1 className="text-3xl font-semibold tracking-tight">Sparkle Button</h1>
+      <p className="mt-2 text-sm text-[#777]">Edit values, preview live, copy the modified code.</p>
+
+      <section className="mt-8 rounded-2xl border border-[#1b1b1b] bg-[radial-gradient(circle_at_top,rgba(70,90,255,0.12),transparent_50%),#0a0a0a] p-8">
+        <div className="mb-4 flex items-center justify-between">
+          <p className="text-xs uppercase tracking-wide text-[#666]">Live Preview</p>
+          <button
+            type="button"
+            onClick={resetPreview}
+            className="rounded-md border border-[#343434] bg-[#101010] px-2.5 py-1 text-xs text-[#c8c8c8] transition hover:border-[#505050] hover:text-white"
+          >
+            Reset
+          </button>
+        </div>
+        <div className="flex min-h-40 items-center justify-center rounded-xl border border-[#242424] bg-[#050505] p-8 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+          <SparkleButton
+            text={text}
+            hoverText={hoverText}
+            activeText={activeText}
+            hue={hue}
+            size={size}
+            loadingDuration={loadingDuration}
+            enableHoverText
+            enableLoadingState
+          />
         </div>
       </section>
 
-      {/* Variants section */}
-      <section id="components" className="max-w-5xl mx-auto px-6 pb-24">
-        <div className="mb-12">
-          <h2 className="text-2xl font-semibold tracking-tight text-[#f0f0f0]">Sparkle Button</h2>
-          <p className="mt-2 text-[#666]">
-            An animated button with customizable glow hue, three sizes, and rich interaction states.
-          </p>
-        </div>
-
-        {/* Color variants grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-16">
-          {variants.map((v) => (
-            <div
-              key={v.label}
-              className="flex flex-col items-center gap-4 rounded-2xl border border-[#141414] bg-[#0a0a0a] p-8 transition-colors hover:border-[#1e1e1e]"
-            >
-              <SparkleButton hue={v.hue} />
-              <div className="text-center">
-                <p className="text-sm font-medium text-[#ccc]">{v.label}</p>
-                <p className="text-xs text-[#555] mt-0.5">
-                  {"hue={"}
-                  {v.hue}
-                  {"}"}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Sizes */}
-        <div className="mb-16">
-          <h3 className="text-lg font-semibold text-[#f0f0f0] mb-6">Sizes</h3>
-          <div className="flex flex-wrap items-center gap-6 p-8 rounded-2xl border border-[#141414] bg-[#0a0a0a]">
-            <div className="flex flex-col items-center gap-3">
-              <SparkleButton size="sm" hue={210} />
-              <span className="text-xs text-[#555]">Small</span>
-            </div>
-            <div className="flex flex-col items-center gap-3">
-              <SparkleButton size="md" hue={210} />
-              <span className="text-xs text-[#555]">Medium</span>
-            </div>
-            <div className="flex flex-col items-center gap-3">
-              <SparkleButton size="lg" hue={210} />
-              <span className="text-xs text-[#555]">Large</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Custom text */}
-        <div className="mb-16">
-          <h3 className="text-lg font-semibold text-[#f0f0f0] mb-6">Custom Text</h3>
-          <div className="flex flex-wrap items-center gap-6 p-8 rounded-2xl border border-[#141414] bg-[#0a0a0a]">
-            <SparkleButton text="Submit" activeText="Submitting" hue={155} />
-            <SparkleButton text="Deploy" activeText="Deploying" hue={40} />
-            <SparkleButton text="Create" activeText="Creating" hue={340} />
-          </div>
-        </div>
-
-        {/* Usage */}
-        <div id="usage">
-          <h3 className="text-lg font-semibold text-[#f0f0f0] mb-6">Usage</h3>
-          <div className="space-y-4">
-            <CodeBlock
-              code={`import { SparkleButton } from "@/components/ui/sparkle-button"
-
-export function MyComponent() {
-  return (
-    <SparkleButton
-      text="Generate"
-      activeText="Generating"
-      hue={210}
-      size="md"
-      onClick={() => console.log("clicked")}
-    />
-  )
-}`}
-            />
-
-            <CodeBlock
-              code={`// Props
-interface SparkleButtonProps {
-  text?: string       // Button label (default: "Generate")
-  activeText?: string // Focus state label (default: "Generating")
-  hue?: number        // Glow hue 0-360 (default: 210)
-  size?: "sm" | "md" | "lg"
-  // ...and all native button attributes
-}`}
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-[#141414]">
-        <div className="max-w-5xl mx-auto px-6 py-8 flex items-center justify-between">
-          <span className="text-xs text-[#444]">
-            Built with care. Inspired by Uiverse.io.
+      <section className="mt-6 rounded-2xl border border-[#1b1b1b] bg-[#0a0a0a] p-5">
+        <p className="text-xs uppercase tracking-wide text-[#666]">Dependencies</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <span className="rounded-full border border-[#2a2a2a] bg-[#090909] px-3 py-1 text-xs text-[#ddd]">
+            react
           </span>
-          <span className="text-xs text-[#444]">MIT License</span>
+          <span className="rounded-full border border-[#2a2a2a] bg-[#090909] px-3 py-1 text-xs text-[#ddd]">
+            no extra npm package required
+          </span>
         </div>
-      </footer>
+      </section>
+
+      <section className="mt-6 grid gap-5 rounded-2xl border border-[#1b1b1b] bg-[#0a0a0a] p-6 md:grid-cols-2">
+          <label className="flex flex-col gap-2 rounded-xl border border-[#1d1d1d] bg-[#0d0d0d] p-4 text-sm">
+            <span className="text-xs uppercase tracking-wide text-[#7e7e7e]">Text</span>
+            <input
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              className="rounded-xl border border-[#2a2a2a] bg-[#050505] px-3 py-2.5 text-[#f1f1f1] outline-none transition focus:border-[#4b4b4b] focus:shadow-[0_0_0_3px_rgba(110,120,255,0.15)]"
+            />
+          </label>
+
+          <label className="flex flex-col gap-2 rounded-xl border border-[#1d1d1d] bg-[#0d0d0d] p-4 text-sm">
+            <span className="text-xs uppercase tracking-wide text-[#7e7e7e]">Hover text</span>
+            <input
+              value={hoverText}
+              onChange={(e) => setHoverText(e.target.value)}
+              className="rounded-xl border border-[#2a2a2a] bg-[#050505] px-3 py-2.5 text-[#f1f1f1] outline-none transition focus:border-[#4b4b4b] focus:shadow-[0_0_0_3px_rgba(110,120,255,0.15)]"
+            />
+          </label>
+
+          <label className="flex flex-col gap-2 rounded-xl border border-[#1d1d1d] bg-[#0d0d0d] p-4 text-sm">
+            <span className="text-xs uppercase tracking-wide text-[#7e7e7e]">Loading text</span>
+            <input
+              value={activeText}
+              onChange={(e) => setActiveText(e.target.value)}
+              className="rounded-xl border border-[#2a2a2a] bg-[#050505] px-3 py-2.5 text-[#f1f1f1] outline-none transition focus:border-[#4b4b4b] focus:shadow-[0_0_0_3px_rgba(110,120,255,0.15)]"
+            />
+          </label>
+
+          <div className="flex flex-col gap-2 rounded-xl border border-[#1d1d1d] bg-[#0d0d0d] p-4 text-sm">
+            <span className="text-xs uppercase tracking-wide text-[#7e7e7e]">Size</span>
+            <div className="flex items-center gap-2 rounded-xl border border-[#262626] bg-[#060606] p-1">
+              {(["sm", "md", "lg"] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => setSize(option)}
+                  className={`flex-1 rounded-lg px-3 py-2 text-xs font-medium uppercase tracking-wide transition ${
+                    size === option
+                      ? "bg-gradient-to-b from-[#2a2a2a] to-[#161616] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]"
+                      : "text-[#777] hover:bg-[#111] hover:text-[#ddd]"
+                  }`}
+                >
+                  {option === "sm" ? "Small" : option === "md" ? "Medium" : "Large"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <label className="flex flex-col gap-3 rounded-xl border border-[#1d1d1d] bg-[#0d0d0d] p-4 text-sm">
+            <span className="flex items-center justify-between text-xs uppercase tracking-wide text-[#7e7e7e]">
+              Hue
+              <span
+                className="rounded-full border border-[#2a2a2a] bg-[#080808] px-2 py-0.5 text-[11px]"
+                style={{ color: `hsl(${hue} 90% 70%)` }}
+              >
+                {hue}
+              </span>
+            </span>
+            <ElasticSlider
+              leftIcon={<Palette className="h-4 w-4" />}
+              rightIcon={<Sparkles className="h-4 w-4" />}
+              startingValue={0}
+              value={hue}
+              maxValue={360}
+              isStepped
+              stepSize={1}
+              enhancedEffects
+              onChange={(next) => setHue(Math.round(next))}
+            />
+          </label>
+
+          <label className="flex flex-col gap-3 rounded-xl border border-[#1d1d1d] bg-[#0d0d0d] p-4 text-sm">
+            <span className="flex items-center justify-between text-xs uppercase tracking-wide text-[#7e7e7e]">
+              Loading duration
+              <span className="rounded-full border border-[#2a2a2a] bg-[#080808] px-2 py-0.5 text-[11px] text-[#d2d2d2]">
+                {loadingDuration}ms
+              </span>
+            </span>
+            <div className="space-y-3 rounded-xl border border-[#262626] bg-[#060606] p-3">
+              <ElasticSlider
+                leftIcon={<TimerReset className="h-4 w-4" />}
+                rightIcon={<Timer className="h-4 w-4" />}
+                startingValue={400}
+                value={loadingDuration}
+                maxValue={5000}
+                isStepped
+                stepSize={100}
+                enhancedEffects
+                onChange={(next) => setLoadingDuration(Math.round(next / 100) * 100)}
+              />
+              <input
+                type="number"
+                min={200}
+                step={100}
+                value={loadingDuration}
+                onChange={(e) => setLoadingDuration(Number(e.target.value) || 2200)}
+                className="w-full appearance-none rounded-lg border border-[#2b2b2b] bg-[#090909] px-3 py-2 text-[#f1f1f1] outline-none transition [appearance:textfield] focus:border-[#4b4b4b] focus:shadow-[0_0_0_3px_rgba(61,130,255,0.16)] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              />
+            </div>
+          </label>
+      </section>
+
+      <section className="mt-6 rounded-2xl border border-[#1b1b1b] bg-[#0a0a0a] p-5">
+        <p className="text-xs uppercase tracking-wide text-[#666]">Package Usage</p>
+        <pre className="mt-3 overflow-x-auto rounded-lg border border-[#222] bg-[#070707] p-3 text-xs text-[#bfbfbf]">
+          <code>{`npm i @chaidev/ui
+
+import "@chaidev/ui/styles.css"
+import { SparkleButton } from "@chaidev/ui"`}</code>
+        </pre>
+      </section>
     </div>
   )
 }

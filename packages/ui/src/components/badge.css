@@ -1,0 +1,111 @@
+.ui-badge {
+  --bd: #9aa0ac;
+  --bg: #21242d;
+  --fg: #f2f4f7;
+  --soft: rgba(154, 160, 172, 0.2);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  position: relative;
+  overflow: hidden;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  transform: translateZ(0);
+}
+
+.ui-badge--sm { font-size: 0.7rem; padding: 0.15rem 0.45rem; }
+.ui-badge--md { font-size: 0.78rem; padding: 0.2rem 0.55rem; }
+.ui-badge--lg { font-size: 0.86rem; padding: 0.28rem 0.68rem; }
+
+.ui-badge--solid { background: var(--bg); color: var(--fg); border-color: color-mix(in oklab, var(--bd) 70%, transparent); }
+.ui-badge--soft { background: var(--soft); color: var(--fg); border-color: color-mix(in oklab, var(--bd) 35%, transparent); }
+.ui-badge--outline { background: transparent; color: var(--fg); border-color: color-mix(in oklab, var(--bd) 55%, transparent); }
+
+.ui-badge--neutral { --bd: #9aa0ac; --bg: #2b2f39; --fg: #eef1f5; --soft: rgba(154, 160, 172, 0.2); }
+.ui-badge--primary { --bd: #5c7cff; --bg: #3f5df5; --fg: #f2f6ff; --soft: rgba(92, 124, 255, 0.2); }
+.ui-badge--success { --bd: #37b46b; --bg: #229557; --fg: #edfdf3; --soft: rgba(55, 180, 107, 0.2); }
+.ui-badge--warning { --bd: #d89b2b; --bg: #b57913; --fg: #fff8ea; --soft: rgba(216, 155, 43, 0.22); }
+.ui-badge--danger { --bd: #de4e4e; --bg: #bf3a3a; --fg: #fff0f0; --soft: rgba(222, 78, 78, 0.2); }
+.ui-badge--info { --bd: #3ea8de; --bg: #2a84b3; --fg: #eefaff; --soft: rgba(62, 168, 222, 0.22); }
+
+.ui-badge__dot {
+  width: 0.45em;
+  height: 0.45em;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.9;
+}
+
+.ui-badge__icon { display: inline-flex; }
+
+.ui-badge__remove {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  opacity: 0.75;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.ui-badge__remove:hover { opacity: 1; }
+
+.ui-badge--anim-pulse {
+  animation: ui-badge-pulse 1.8s ease-in-out infinite;
+}
+
+.ui-badge--anim-glow {
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--bd) 45%, transparent),
+    0 0 18px color-mix(in oklab, var(--bd) 38%, transparent);
+}
+
+.ui-badge--anim-float {
+  animation: ui-badge-float 2.4s ease-in-out infinite;
+}
+
+.ui-badge--anim-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-130%);
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.12) 45%,
+    rgba(255, 255, 255, 0.24) 52%,
+    transparent 70%
+  );
+  animation: ui-badge-shimmer 2.2s ease-in-out infinite;
+}
+
+.ui-badge--anim-wiggle {
+  animation: ui-badge-wiggle 1.9s ease-in-out infinite;
+}
+
+@keyframes ui-badge-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+@keyframes ui-badge-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+@keyframes ui-badge-shimmer {
+  0% { transform: translateX(-130%); }
+  100% { transform: translateX(130%); }
+}
+
+@keyframes ui-badge-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-1deg); }
+  40% { transform: rotate(1deg); }
+  60% { transform: rotate(-0.8deg); }
+  80% { transform: rotate(0.8deg); }
+}

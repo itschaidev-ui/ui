@@ -1,0 +1,112 @@
+.badge-pro {
+  --bd: #9aa0ac;
+  --bg: #21242d;
+  --fg: #f2f4f7;
+  --soft: rgba(154, 160, 172, 0.2);
+  --ring: rgba(154, 160, 172, 0.35);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  position: relative;
+  overflow: hidden;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  transform: translateZ(0);
+}
+
+.badge-pro--sm { font-size: 0.7rem; padding: 0.15rem 0.45rem; }
+.badge-pro--md { font-size: 0.78rem; padding: 0.2rem 0.55rem; }
+.badge-pro--lg { font-size: 0.86rem; padding: 0.28rem 0.68rem; }
+
+.badge-pro--solid { background: var(--bg); color: var(--fg); border-color: color-mix(in oklab, var(--bd) 70%, transparent); }
+.badge-pro--soft { background: var(--soft); color: var(--fg); border-color: color-mix(in oklab, var(--bd) 35%, transparent); }
+.badge-pro--outline { background: transparent; color: var(--fg); border-color: color-mix(in oklab, var(--bd) 55%, transparent); }
+
+.badge-pro--neutral { --bd: #9aa0ac; --bg: #2b2f39; --fg: #eef1f5; --soft: rgba(154, 160, 172, 0.2); }
+.badge-pro--primary { --bd: #5c7cff; --bg: #3f5df5; --fg: #f2f6ff; --soft: rgba(92, 124, 255, 0.2); }
+.badge-pro--success { --bd: #37b46b; --bg: #229557; --fg: #edfdf3; --soft: rgba(55, 180, 107, 0.2); }
+.badge-pro--warning { --bd: #d89b2b; --bg: #b57913; --fg: #fff8ea; --soft: rgba(216, 155, 43, 0.22); }
+.badge-pro--danger { --bd: #de4e4e; --bg: #bf3a3a; --fg: #fff0f0; --soft: rgba(222, 78, 78, 0.2); }
+.badge-pro--info { --bd: #3ea8de; --bg: #2a84b3; --fg: #eefaff; --soft: rgba(62, 168, 222, 0.22); }
+
+.badge-pro__dot {
+  width: 0.45em;
+  height: 0.45em;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.9;
+}
+
+.badge-pro__icon { display: inline-flex; }
+
+.badge-pro__remove {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  opacity: 0.75;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.badge-pro__remove:hover { opacity: 1; }
+
+.badge-pro--anim-pulse {
+  animation: badge-pulse 1.8s ease-in-out infinite;
+}
+
+.badge-pro--anim-glow {
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--bd) 45%, transparent),
+    0 0 18px color-mix(in oklab, var(--bd) 38%, transparent);
+}
+
+.badge-pro--anim-float {
+  animation: badge-float 2.4s ease-in-out infinite;
+}
+
+.badge-pro--anim-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-130%);
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.12) 45%,
+    rgba(255, 255, 255, 0.24) 52%,
+    transparent 70%
+  );
+  animation: badge-shimmer 2.2s ease-in-out infinite;
+}
+
+.badge-pro--anim-wiggle {
+  animation: badge-wiggle 1.9s ease-in-out infinite;
+}
+
+@keyframes badge-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+@keyframes badge-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+@keyframes badge-shimmer {
+  0% { transform: translateX(-130%); }
+  100% { transform: translateX(130%); }
+}
+
+@keyframes badge-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-1deg); }
+  40% { transform: rotate(1deg); }
+  60% { transform: rotate(-0.8deg); }
+  80% { transform: rotate(0.8deg); }
+}

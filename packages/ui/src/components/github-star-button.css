@@ -1,0 +1,92 @@
+.ui-github-star-button {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 208px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: 1px solid #151515;
+  background: #000;
+  color: #fff;
+  text-decoration: none;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  transition: all 0.3s ease;
+}
+
+.ui-github-star-button:hover {
+  background: rgba(0, 0, 0, 0.92);
+  box-shadow:
+    0 0 0 2px #000,
+    0 0 0 4px rgba(255, 255, 255, 0.12);
+}
+
+.ui-github-star-button:focus-visible {
+  outline: 2px solid rgba(120, 140, 255, 0.8);
+  outline-offset: 2px;
+}
+
+.ui-github-star-button__sweep {
+  position: absolute;
+  right: 0;
+  margin-top: -48px;
+  height: 128px;
+  width: 32px;
+  transform: translateX(48px) rotate(12deg);
+  background: #fff;
+  opacity: 0.1;
+  transition: transform 1s ease-out;
+}
+
+.ui-github-star-button:hover .ui-github-star-button__sweep {
+  transform: translateX(-160px) rotate(12deg);
+}
+
+.ui-github-star-button__left,
+.ui-github-star-button__right {
+  display: inline-flex;
+  align-items: center;
+}
+
+.ui-github-star-button__github-icon {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.ui-github-star-button__label {
+  margin-left: 4px;
+  color: #fff;
+}
+
+.ui-github-star-button__right {
+  margin-left: 4px;
+  gap: 4px;
+}
+
+.ui-github-star-button__star-icon {
+  width: 16px;
+  height: 16px;
+  color: #737373;
+  fill: currentColor;
+  transition: color 0.3s ease;
+}
+
+.ui-github-star-button:hover .ui-github-star-button__star-icon {
+  color: #fde047;
+}
+
+.ui-github-star-button__count {
+  display: inline-block;
+  color: #fff;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}

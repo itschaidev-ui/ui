@@ -1,0 +1,90 @@
+.segmented-control {
+  --seg-radius: 16px;
+  --seg-pill-inset: 4px;
+  --seg-pill-radius: 12px;
+  --seg-height: 48px;
+  --seg-font-size: 18px;
+  --seg-bg: #e3e3e3;
+  --seg-border: #c8c8c8;
+  --seg-text: #666666;
+  --seg-text-active: #252525;
+  --seg-pill-bg: #f3f3f3;
+  --seg-pill-border: #c4c4c4;
+
+  position: relative;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  align-items: center;
+  min-height: var(--seg-height);
+  padding: var(--seg-pill-inset);
+  border-radius: var(--seg-radius);
+  border: 1px solid var(--seg-border);
+  background: var(--seg-bg);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 1px 2px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  touch-action: none;
+}
+
+.segmented-control[data-draggable="false"] {
+  touch-action: auto;
+}
+
+.segmented-control[data-dragging="true"] {
+  cursor: grabbing;
+}
+
+.segmented-control__active-pill {
+  position: absolute;
+  top: var(--seg-pill-inset);
+  left: var(--seg-pill-inset);
+  bottom: var(--seg-pill-inset);
+  border-radius: var(--seg-pill-radius);
+  background: var(--seg-pill-bg);
+  border: 1px solid var(--seg-pill-border);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 1px 2px rgba(0, 0, 0, 0.12),
+    0 0 0 1px color-mix(in oklab, var(--seg-accent-secondary) 15%, transparent);
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.segmented-control__button {
+  position: relative;
+  z-index: 1;
+  border: 0;
+  background: transparent;
+  color: var(--seg-text);
+  padding: 0.6rem 0.75rem;
+  font-size: var(--seg-font-size);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 180ms ease;
+  cursor: pointer;
+}
+
+.segmented-control__button:hover {
+  color: #4f4f4f;
+}
+
+.segmented-control__button.is-active {
+  color: var(--seg-text-active);
+}
+
+.segmented-control__visual {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.3em;
+  height: 1.3em;
+}
+
+.segmented-control__visual > img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}

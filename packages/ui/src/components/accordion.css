@@ -1,0 +1,111 @@
+.ui-accordion {
+  display: grid;
+  gap: 8px;
+}
+
+.ui-accordion__item {
+  border: 1px solid #212121;
+  border-radius: 14px;
+  background: #0b0b0b;
+  overflow: hidden;
+}
+
+.ui-accordion--bordered .ui-accordion__item {
+  border-color: #343434;
+}
+
+.ui-accordion__trigger {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #f2f2f2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  padding: 14px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ui-accordion__icon {
+  color: #9e9e9e;
+  transition: transform 0.2s ease;
+}
+
+.ui-accordion__icon.is-open {
+  transform: rotate(45deg);
+}
+
+.ui-accordion__panel {
+  overflow: hidden;
+}
+
+.ui-accordion__panel--none {
+  display: none;
+}
+
+.ui-accordion__panel--none.is-open {
+  display: block;
+}
+
+.ui-accordion__panel--smooth {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.28s ease,
+    opacity 0.2s ease;
+}
+
+.ui-accordion__panel--smooth.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.ui-accordion__panel--fade {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.26s ease,
+    opacity 0.28s ease;
+}
+
+.ui-accordion__panel--fade.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.ui-accordion__panel--pop {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: translateY(-10px) scale(0.94);
+  transform-origin: top center;
+  transition:
+    grid-template-rows 0.34s cubic-bezier(0.18, 0.89, 0.32, 1.16),
+    opacity 0.26s ease,
+    transform 0.34s cubic-bezier(0.18, 0.89, 0.32, 1.16);
+}
+
+.ui-accordion__panel--pop.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.ui-accordion__panel-inner {
+  overflow: hidden;
+  padding: 0 16px 14px;
+  color: #bdbdbd;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.is-disabled .ui-accordion__trigger {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

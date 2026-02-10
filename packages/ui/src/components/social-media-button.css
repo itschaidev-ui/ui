@@ -1,0 +1,112 @@
+.ui-social-media-button {
+  --social-accent: #000000;
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 240px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--social-accent) 72%, white 28%);
+  background: color-mix(in srgb, var(--social-accent) 92%, black 8%);
+  color: #ffffff;
+  text-decoration: none;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.25s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.ui-social-media-button:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 10px 24px color-mix(in srgb, var(--social-accent) 40%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--social-accent) 45%, transparent);
+}
+
+.ui-social-media-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--social-accent) 70%, white 30%);
+  outline-offset: 2px;
+}
+
+.ui-social-media-button__sweep {
+  position: absolute;
+  top: 50%;
+  left: -64px;
+  height: 140%;
+  width: 32px;
+  transform: translateY(-50%) rotate(12deg);
+  background: #fff;
+  opacity: 0.12;
+  transition: left var(--social-sweep-duration, 1000ms) var(--social-sweep-easing, ease-out);
+}
+
+.ui-social-media-button:hover .ui-social-media-button__sweep {
+  left: calc(100% + 64px);
+}
+
+.ui-social-media-button__left {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ui-social-media-button__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+}
+
+.ui-social-media-button__icon-fallback {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ui-social-media-button__label {
+  color: #fff;
+}
+
+.ui-social-media-button__count {
+  min-width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.12);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-social-media-button__count-wrap {
+  margin-left: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ui-social-media-button__star-icon {
+  width: 16px;
+  height: 16px;
+  color: #7a7a7a;
+  fill: currentColor;
+  transition: color 0.25s ease;
+}
+
+.ui-social-media-button:hover .ui-social-media-button__star-icon {
+  color: #fde047;
+}

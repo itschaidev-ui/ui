@@ -1,0 +1,185 @@
+.ui-chip {
+  --chip-bg: #141414;
+  --chip-fg: #f2f2f2;
+  --chip-border: #2c2c2c;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--chip-border);
+  border-radius: 999px;
+  background: var(--chip-bg);
+  color: var(--chip-fg);
+}
+
+.ui-chip--sm {
+  font-size: 12px;
+}
+
+.ui-chip--md {
+  font-size: 13px;
+}
+
+.ui-chip--lg {
+  font-size: 14px;
+}
+
+.ui-chip__button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1;
+  padding: 0 10px;
+  min-height: 26px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ui-chip--sm .ui-chip__button {
+  min-height: 22px;
+  padding: 0 8px;
+}
+
+.ui-chip--lg .ui-chip__button {
+  min-height: 30px;
+  padding: 0 12px;
+}
+
+.ui-chip__button--static {
+  cursor: default;
+}
+
+.ui-chip__icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.ui-chip__remove {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  cursor: pointer;
+  margin-right: 2px;
+  line-height: 1;
+}
+
+.ui-chip--selected {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.16) inset,
+    0 6px 20px rgba(0, 0, 0, 0.28);
+}
+
+.ui-chip--animated {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.ui-chip--animated:hover {
+  transform: translateY(-1px);
+}
+
+.ui-chip--disabled {
+  opacity: 0.55;
+}
+
+.ui-chip--disabled .ui-chip__button,
+.ui-chip--disabled .ui-chip__remove {
+  cursor: not-allowed;
+}
+
+.ui-chip--neutral.ui-chip--soft {
+  --chip-bg: #151515;
+  --chip-fg: #ececec;
+  --chip-border: #2b2b2b;
+}
+
+.ui-chip--primary.ui-chip--soft {
+  --chip-bg: rgba(92, 103, 255, 0.18);
+  --chip-fg: #dbe1ff;
+  --chip-border: rgba(116, 126, 255, 0.4);
+}
+
+.ui-chip--success.ui-chip--soft {
+  --chip-bg: rgba(52, 211, 153, 0.18);
+  --chip-fg: #d1fae5;
+  --chip-border: rgba(74, 222, 128, 0.35);
+}
+
+.ui-chip--warning.ui-chip--soft {
+  --chip-bg: rgba(251, 191, 36, 0.2);
+  --chip-fg: #fef3c7;
+  --chip-border: rgba(251, 191, 36, 0.35);
+}
+
+.ui-chip--danger.ui-chip--soft {
+  --chip-bg: rgba(248, 113, 113, 0.2);
+  --chip-fg: #fee2e2;
+  --chip-border: rgba(248, 113, 113, 0.4);
+}
+
+.ui-chip--neutral.ui-chip--solid {
+  --chip-bg: #2a2a2a;
+  --chip-fg: #fff;
+  --chip-border: #3a3a3a;
+}
+
+.ui-chip--primary.ui-chip--solid {
+  --chip-bg: #5b66ff;
+  --chip-fg: #fff;
+  --chip-border: #6d77ff;
+}
+
+.ui-chip--success.ui-chip--solid {
+  --chip-bg: #16a34a;
+  --chip-fg: #fff;
+  --chip-border: #22c55e;
+}
+
+.ui-chip--warning.ui-chip--solid {
+  --chip-bg: #d97706;
+  --chip-fg: #fff;
+  --chip-border: #f59e0b;
+}
+
+.ui-chip--danger.ui-chip--solid {
+  --chip-bg: #dc2626;
+  --chip-fg: #fff;
+  --chip-border: #ef4444;
+}
+
+.ui-chip--neutral.ui-chip--outline,
+.ui-chip--primary.ui-chip--outline,
+.ui-chip--success.ui-chip--outline,
+.ui-chip--warning.ui-chip--outline,
+.ui-chip--danger.ui-chip--outline {
+  --chip-bg: transparent;
+}
+
+.ui-chip--neutral.ui-chip--outline {
+  --chip-fg: #e5e5e5;
+  --chip-border: #3a3a3a;
+}
+
+.ui-chip--primary.ui-chip--outline {
+  --chip-fg: #c9d0ff;
+  --chip-border: #5c67ff;
+}
+
+.ui-chip--success.ui-chip--outline {
+  --chip-fg: #bbf7d0;
+  --chip-border: #22c55e;
+}
+
+.ui-chip--warning.ui-chip--outline {
+  --chip-fg: #fde68a;
+  --chip-border: #f59e0b;
+}
+
+.ui-chip--danger.ui-chip--outline {
+  --chip-fg: #fecaca;
+  --chip-border: #ef4444;
+}
