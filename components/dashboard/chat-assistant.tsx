@@ -411,33 +411,39 @@ const CONVERSATION_FALLBACK_RESPONSE =
 const AGENT_FALLBACK_RESPONSE =
   "Here's the code for your request. You can copy it from the Code panel or open in docs."
 
-function shouldGenerateCode(prompt: string) {
+type AgentIntentDecision = "generate" | "chat" | "confirm"
+
+function decideAgentIntent(prompt: string): AgentIntentDecision {
   const text = prompt.toLowerCase().trim()
-  if (!text) return false
+  if (!text) return "chat"
 
-  const codeIntentPatterns = [
-    /\b(build|create|generate|make|maek|implement|code|add|write)\b/,
-    /\b(component|ui|page|screen|layout|landing page|dashboard|button|form|style|styled)\b/,
-    /\b(tsx|jsx|react|next\.?js|tailwind|css)\b/,
-  ]
-  const buttonLike = /\b(button|buton|butotn|btn|buttons)\b/.test(text)
-  const uiRequest = /\b(stylish|hover|click|effect|animation|gradient)\b/.test(text)
-  const hasAction = codeIntentPatterns[0].test(text)
-  const hasUiDomain = codeIntentPatterns[1].test(text) || buttonLike
-  const hasTech = codeIntentPatterns[2].test(text)
-
-  if (hasAction && (hasUiDomain || hasTech)) return true
-  if (hasAction && uiRequest) return true
-  if ((hasUiDomain && hasTech) || text.length > 140) return true
-
-  // Follow-up edit requests: "make it stylish", "edit it", "update the button", "change it to..."
+  const actionWords = /\b(build|create|generate|make|maek|implement|code|add|write)\b/.test(text)
+  const uiDomain =
+    /\b(component|ui|page|screen|layout|landing page|dashboard|button|form|style|styled|hero|card|cta|navbar)\b/.test(
+      text
+    )
+  const strongCodeSignals =
+    /\b(tsx|jsx|react|next\.?js|tailwind|css|typescript|javascript)\b/.test(text) ||
+    /\b(import|export default|className=|return\s*\()/.test(text)
+  const explicitInfoIntent = /\b(explain|what is|how does|why|recommend|suggest|idea|plan)\b/.test(text)
+  const directQuestion = /\?$/.test(text) || /\b(can you explain|what should i use)\b/.test(text)
   const editIntent =
-    /\b(edit|update|change|improve|refine|fix)\b/.test(text) ||
+    /\b(edit|update|change|improve|refine|fix|restyle|polish)\b/.test(text) ||
     /\bmake\s+it\s+\w+/.test(text) ||
-    /\b(make|style)\s+(it|the)\b/.test(text)
-  if (editIntent && (uiRequest || hasUiDomain || /\b(it|the)\b/.test(text))) return true
+    /\b(style|change)\s+(it|the)\b/.test(text)
 
-  return false
+  // High-confidence generation intent.
+  if (strongCodeSignals || editIntent || (actionWords && uiDomain) || (uiDomain && !directQuestion)) {
+    return "generate"
+  }
+
+  // Clear chat/advice intent.
+  if (explicitInfoIntent || directQuestion) return "chat"
+
+  // Ambiguous action wording like "make one" -> confirm before generating.
+  if (actionWords) return "confirm"
+
+  return "chat"
 }
 
 /** Normalize API message to local ChatMessage */
@@ -716,8 +722,20 @@ export function ChatAssistant() {
     }
 
     if (mode === "agent") {
-      const shouldRunGeneration = shouldGenerateCode(trimmed)
-      if (!shouldRunGeneration) {
+      const intent = decideAgentIntent(trimmed)
+      if (intent === "confirm") {
+        const assistantId = Date.now() + 1
+        const confirmText =
+          'I can do either: generate code now, or explain first. Reply with "generate it" to create files, or "explain first" for guidance.'
+        setMessages((prev) => {
+          const updated = [...prev, { id: assistantId, role: "assistant", text: confirmText, kind: "text" as const }]
+          persistMessages(updated)
+          return updated
+        })
+        return
+      }
+
+      if (intent === "chat") {
         const assistantId = Date.now() + 1
         const replyPromise = requestAiReply(trimmed, "agent")
         setMessages((prev) => [
