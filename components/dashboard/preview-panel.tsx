@@ -103,12 +103,6 @@ function LivePreviewSurface({
   const buttonBg = resolvedBg
   const buttonFg = isColoredButton ? "#ffffff" : isLight ? "#ffffff" : "#0b1220"
 
-  useEffect(() => {
-    // #region agent log
-    fetch("http://127.0.0.1:7243/ingest/1559cb0d-dcd7-480b-95b9-729473f06d3d",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({runId:"post-fix",hypothesisId:"H10",location:"preview-panel.tsx:LivePreviewSurface:branch",message:"live preview branch decision",data:{isGenerating,isButtonCode,showButton,buttonLabel,buttonBg,hasSparkleTag},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
-  }, [isGenerating, isButtonCode, showButton, buttonLabel, buttonBg, hasSparkleTag, generatedCode, streamedCode])
-
   return (
     <motion.div
       key={isGenerating ? "live-preview-generating" : "live-preview-ready"}
@@ -348,15 +342,6 @@ export function PreviewPanel() {
   const fileEntries = Object.keys(projectFiles)
   const activeCode = projectFiles[activeFilePath] ?? generatedCode ?? PLACEHOLDER_CODE
   const previewTitle = lastPrompt?.trim() || "Your generated UI"
-
-  useEffect(() => {
-    if (!generatedCode) return
-    const hasBadImport = /@sparkle-ui|sparkle-ui\/core|sparkle-ui\/button/i.test(generatedCode)
-    const hasSparkleButton = /<sparklebutton|sparklebutton\b/i.test(generatedCode)
-    // #region agent log
-    fetch("http://127.0.0.1:7243/ingest/1559cb0d-dcd7-480b-95b9-729473f06d3d",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({runId:"run1",hypothesisId:"H7",location:"preview-panel.tsx:previewInput",message:"preview received generated code",data:{activeFilePath,hasBadImport,hasSparkleButton,head:generatedCode.slice(0,100)},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
-  }, [generatedCode, activeFilePath])
 
   return (
     <div

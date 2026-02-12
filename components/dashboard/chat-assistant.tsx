@@ -570,9 +570,6 @@ export function ChatAssistant() {
       .then((res) => (res.ok ? res.json() : null))
       .then((chat) => {
         if (cancelled || !chat?.messages) return
-        // #region agent log
-        fetch("http://127.0.0.1:7243/ingest/1559cb0d-dcd7-480b-95b9-729473f06d3d",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({runId:"run1",hypothesisId:"H3",location:"chat-assistant.tsx:loadChat:applyFetched",message:"applying fetched chat messages",data:{currentChatId,fetchedCount:Array.isArray(chat.messages)?chat.messages.length:0},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
         setMessages(chat.messages.map(toChatMessage))
       })
       .catch(() => {})
@@ -692,9 +689,6 @@ export function ChatAssistant() {
   const handleSend = async (value?: string) => {
     const trimmed = (value ?? input).trim()
     if (!trimmed) return
-    // #region agent log
-    fetch("http://127.0.0.1:7243/ingest/1559cb0d-dcd7-480b-95b9-729473f06d3d",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({runId:"run1",hypothesisId:"H2",location:"chat-assistant.tsx:handleSend:start",message:"handleSend invoked",data:{mode,trimmed,currentChatId:currentChatId ?? null,hasSession:Boolean(session?.user)},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
 
     if (mode === "agent") {
       setAgentTask(trimmed)
@@ -723,13 +717,7 @@ export function ChatAssistant() {
 
     if (mode === "agent") {
       const shouldRunGeneration = shouldGenerateCode(trimmed)
-      // #region agent log
-      fetch("http://127.0.0.1:7243/ingest/1559cb0d-dcd7-480b-95b9-729473f06d3d",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({runId:"run1",hypothesisId:"H1",location:"chat-assistant.tsx:handleSend:decision",message:"generation decision",data:{trimmed,shouldRunGeneration},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       if (!shouldRunGeneration) {
-        // #region agent log
-        fetch("http://127.0.0.1:7243/ingest/1559cb0d-dcd7-480b-95b9-729473f06d3d",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({runId:"run1",hypothesisId:"H1",location:"chat-assistant.tsx:handleSend:chatPath",message:"routed to chat path",data:{trimmed},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
         const assistantId = Date.now() + 1
         const replyPromise = requestAiReply(trimmed, "agent")
         setMessages((prev) => [
@@ -780,9 +768,6 @@ export function ChatAssistant() {
 
       const placeholderId = Date.now() + 1
       const codeGenFile = "src/App/page.tsx"
-      // #region agent log
-      fetch("http://127.0.0.1:7243/ingest/1559cb0d-dcd7-480b-95b9-729473f06d3d",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({runId:"run1",hypothesisId:"H1",location:"chat-assistant.tsx:handleSend:generationPath",message:"routed to generation path",data:{trimmed,placeholderId,codeGenFile},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       pendingFileRef.current = codeGenFile
       setGenerating(true)
       setGeneratingFile(codeGenFile)
@@ -854,9 +839,6 @@ export function ChatAssistant() {
         })
       })
 
-      // #region agent log
-      fetch("http://127.0.0.1:7243/ingest/1559cb0d-dcd7-480b-95b9-729473f06d3d",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({runId:"post-fix",hypothesisId:"H9",location:"chat-assistant.tsx:handleSend:skipAgentCodeReply",message:"skip secondary agent code reply to avoid conflicting chat code",data:{placeholderId},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
     } else {
       const assistantId = Date.now() + 1
       const replyPromise = requestAiReply(trimmed, "conversation")
