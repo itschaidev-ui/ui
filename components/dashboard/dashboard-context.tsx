@@ -5,6 +5,15 @@ import type { AssistantMode } from "@/lib/dashboard-references"
 import type { ChatSummary, ChatPayload, ChatMessagePayload } from "@/lib/chats"
 import { extractCodeBlock, normalizeUiImports } from "@/lib/code-parse"
 
+export type SandboxExecutionState =
+  | "idle"
+  | "generating"
+  | "pending_install_confirmation"
+  | "installing"
+  | "building"
+  | "ready"
+  | "error"
+
 type DashboardContextValue = {
   mode: AssistantMode
   setMode: (mode: AssistantMode) => void
@@ -45,8 +54,14 @@ type DashboardContextValue = {
   /** Terminal (server exec) output; append-only. */
   terminalOutput: string
   terminalRunning: boolean
-  runCommand: (command: string, args?: string[]) => Promise<void>
+  runCommand: (command: string, args?: string[], opts?: { cwd?: string }) => Promise<number>
   clearTerminal: () => void
+  executionState: SandboxExecutionState
+  pendingInstallPackages: string[]
+  executionError: string | null
+  workspaceRoot: string | null
+  runtimePreviewUrl: string | null
+  resolveDependencyInstall: (approved: boolean) => Promise<void>
   /** Fix build errors in the given file; returns true if fixed and written. */
   fixBuildError: (path: string, content: string, errorMessage?: string) => Promise<boolean>
   fixingBuild: boolean
@@ -149,8 +164,121 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const [terminalOutput, setTerminalOutput] = useState("")
   const [terminalRunning, setTerminalRunning] = useState(false)
   const [fixingBuild, setFixingBuild] = useState(false)
+  const [executionState, setExecutionState] = useState<SandboxExecutionState>("idle")
+  const [pendingInstallPackages, setPendingInstallPackages] = useState<string[]>([])
+  const [executionError, setExecutionError] = useState<string | null>(null)
+  const [workspaceRoot, setWorkspaceRoot] = useState<string | null>(null)
+  const [runtimePreviewUrl, setRuntimePreviewUrl] = useState<string | null>(null)
 
   const clearTerminal = useCallback(() => setTerminalOutput(""), [])
+
+  const runCommand = useCallback(async (command: string, args: string[] = [], opts?: { cwd?: string }) => {
+    const displayCmd = [command, ...args].join(" ")
+    setTerminalOutput((prev) => (prev ? `${prev}\n$ ${displayCmd}\n` : `$ ${displayCmd}\n`))
+    setTerminalRunning(true)
+    let exitCode = 0
+    try {
+      const res = await fetch("/api/agent/exec", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ command: command.trim(), args, ...(opts?.cwd ? { cwd: opts.cwd } : {}) }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        const message = typeof err?.error === "string" ? err.error : "Request failed"
+        setTerminalOutput((prev) => prev + message + "\n")
+        return 1
+      }
+      const reader = res.body?.getReader()
+      if (!reader) {
+        setTerminalOutput((prev) => prev + "(no response body)\n")
+        return 1
+      }
+
+      const dec = new TextDecoder()
+      let buf = ""
+      const handleLine = (line: string) => {
+        if (!line.trim()) return
+        try {
+          const obj = JSON.parse(line) as {
+            type: string
+            text?: string
+            message?: string
+            code?: number
+            workspaceRoot?: string
+          }
+          if ((obj.type === "stdout" || obj.type === "stderr") && typeof obj.text === "string") {
+            setTerminalOutput((prev) => prev + obj.text)
+            return
+          }
+          if (obj.type === "start" && typeof obj.workspaceRoot === "string") {
+            setWorkspaceRoot(obj.workspaceRoot)
+            return
+          }
+          if (obj.type === "exit" && typeof obj.code === "number") {
+            exitCode = obj.code
+            if (obj.code !== 0) setTerminalOutput((prev) => prev + `\n(exit ${obj.code})\n`)
+            return
+          }
+          if (obj.type === "error" && typeof obj.message === "string") {
+            setTerminalOutput((prev) => prev + obj.message + "\n")
+            if (exitCode === 0) exitCode = 1
+          }
+        } catch {
+          // ignore malformed lines
+        }
+      }
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buf += dec.decode(value, { stream: true })
+        const lines = buf.split("\n")
+        buf = lines.pop() ?? ""
+        lines.forEach(handleLine)
+      }
+      if (buf.trim()) handleLine(buf)
+    } finally {
+      setTerminalRunning(false)
+    }
+    return exitCode
+  }, [])
+
+  const runBuildPipeline = useCallback(async () => {
+    setExecutionState("building")
+    setExecutionError(null)
+    const code = await runCommand("npm", ["run", "build"])
+    if (code === 0) {
+      setExecutionState("ready")
+      setRuntimePreviewUrl(null)
+      return true
+    }
+    setExecutionState("error")
+    setExecutionError("Build failed. Review terminal output and run Fix to repair code.")
+    return false
+  }, [runCommand])
+
+  const resolveDependencyInstall = useCallback(async (approved: boolean) => {
+    if (!approved) {
+      setExecutionState("error")
+      setExecutionError("Dependency installation was declined.")
+      return
+    }
+    if (pendingInstallPackages.length === 0) {
+      await runBuildPipeline()
+      return
+    }
+    setExecutionState("installing")
+    setExecutionError(null)
+    const code = await runCommand("npm", ["install", ...pendingInstallPackages])
+    if (code !== 0) {
+      setExecutionState("error")
+      setExecutionError("Dependency install failed. See terminal output.")
+      return
+    }
+    setPendingInstallPackages([])
+    await runBuildPipeline()
+  }, [pendingInstallPackages, runBuildPipeline, runCommand])
 
   const fixBuildError = useCallback(
     async (path: string, content: string, errorMessage?: string): Promise<boolean> => {
@@ -173,12 +301,18 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         const writeRes = await fetch("/api/agent/files", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ path, content: fixed }),
+          body: JSON.stringify({ action: "write", path, content: fixed }),
         })
         if (!writeRes.ok) return false
-        const written = (await writeRes.json()) as { path: string; content: string }
+        const written = (await writeRes.json()) as { path: string; content: string; missingPackages?: string[] }
         setProjectFiles((prev) => ({ ...prev, [written.path]: written.content }))
         setGeneratedCode((prev) => (prev && path === activeFilePath ? written.content : prev))
+        if (Array.isArray(written.missingPackages) && written.missingPackages.length > 0) {
+          setPendingInstallPackages(written.missingPackages)
+          setExecutionState("pending_install_confirmation")
+        } else {
+          await runBuildPipeline()
+        }
         return true
       } catch {
         return false
@@ -186,78 +320,17 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         setFixingBuild(false)
       }
     },
-    [activeFilePath]
+    [activeFilePath, runBuildPipeline]
   )
-
-  const runCommand = useCallback(async (command: string, args: string[] = []) => {
-    const displayCmd = [command, ...args].join(" ")
-    setTerminalOutput((prev) => (prev ? `${prev}\n$ ${displayCmd}\n` : `$ ${displayCmd}\n`))
-    setTerminalRunning(true)
-    try {
-      const res = await fetch("/api/agent/exec", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command: command.trim(), args }),
-      })
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        setTerminalOutput((prev) => prev + (typeof err?.error === "string" ? err.error : "Request failed") + "\n")
-        return
-      }
-      const reader = res.body?.getReader()
-      if (!reader) {
-        setTerminalOutput((prev) => prev + "(no response body)\n")
-        return
-      }
-      const dec = new TextDecoder()
-      let buf = ""
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        buf += dec.decode(value, { stream: true })
-        const lines = buf.split("\n")
-        buf = lines.pop() ?? ""
-        for (const line of lines) {
-          if (!line.trim()) continue
-          try {
-            const obj = JSON.parse(line) as { type: string; text?: string; message?: string; code?: number }
-            if (obj.type === "stdout" && typeof obj.text === "string") {
-              setTerminalOutput((prev) => prev + obj.text)
-            } else if (obj.type === "stderr" && typeof obj.text === "string") {
-              setTerminalOutput((prev) => prev + obj.text)
-            } else if (obj.type === "exit") {
-              if (obj.code != null && obj.code !== 0) {
-                setTerminalOutput((prev) => prev + `\n(exit ${obj.code})\n`)
-              }
-            } else if ((obj.type === "error" || obj.type === "start") && typeof obj.message === "string") {
-              if (obj.type === "error") setTerminalOutput((prev) => prev + obj.message + "\n")
-            }
-          } catch {
-            // skip malformed line
-          }
-        }
-      }
-      if (buf.trim()) {
-        try {
-          const obj = JSON.parse(buf) as { type: string; text?: string; message?: string }
-          if (obj.type === "stdout" && typeof obj.text === "string") setTerminalOutput((prev) => prev + obj.text)
-          else if (obj.type === "stderr" && typeof obj.text === "string") setTerminalOutput((prev) => prev + obj.text)
-        } catch {
-          // ignore
-        }
-      }
-    } finally {
-      setTerminalRunning(false)
-    }
-  }, [])
 
   const loadProjectFiles = useCallback(async () => {
     try {
       const res = await fetch("/api/agent/files")
       if (!res.ok) return
-      const data = (await res.json()) as { files?: string[]; contents?: Record<string, string> }
+      const data = (await res.json()) as { files?: string[]; contents?: Record<string, string>; workspaceRoot?: string }
       const contents = data.contents ?? {}
       const files = data.files ?? Object.keys(contents)
+      if (typeof data.workspaceRoot === "string") setWorkspaceRoot(data.workspaceRoot)
       if (Object.keys(contents).length > 0) {
         setProjectFiles(contents)
         setActiveFilePath((prev) => (files.includes(prev) ? prev : files[0] ?? "src/App/page.tsx"))
@@ -341,11 +414,11 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     const targetFile = inferTargetFile(prompt, knownPaths.length > 0 ? knownPaths : ["src/App/page.tsx"])
     const previousCode = projectFiles[targetFile] ?? FALLBACK_GENERATED_CODE
     const editing = isEditPrompt(prompt) && Boolean(projectFiles[targetFile])
-    // #region agent log
-    fetch("http://127.0.0.1:7243/ingest/1559cb0d-dcd7-480b-95b9-729473f06d3d",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({runId:"run1",hypothesisId:"H4",location:"dashboard-context.tsx:triggerGeneration:start",message:"triggerGeneration start",data:{prompt,targetFile,editing,knownPathCount:knownPaths.length},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
 
     setIsGenerating(true)
+    setExecutionState("generating")
+    setExecutionError(null)
+    setPendingInstallPackages([])
     setGeneratingFile(targetFile)
     setGeneratedCode(null)
     setLastGeneratedFilePath(null)
@@ -355,6 +428,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     setActiveFilePath(targetFile)
 
     let fullCode = FALLBACK_GENERATED_CODE
+    let modelPackages: string[] = []
     try {
       const logTail = agentLog.slice(-20).map((e) => `[${new Date(e.timestamp).toISOString()}] ${e.action}${e.result ? `: ${e.result}` : ""}`).join("\n")
       const response = await fetch("/api/ai", {
@@ -370,24 +444,15 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       })
 
       if (response.ok) {
-        const data = await response.json()
+        const data = (await response.json()) as { code?: string; requiredPackages?: string[] }
         if (typeof data?.code === "string" && data.code.trim().length > 0) {
           const parsed = extractCodeBlock(data.code)
           fullCode = normalizeUiImports(parsed ? parsed : data.code.trim())
-          // #region agent log
-          fetch("http://127.0.0.1:7243/ingest/1559cb0d-dcd7-480b-95b9-729473f06d3d",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({runId:"run1",hypothesisId:"H4",location:"dashboard-context.tsx:triggerGeneration:aiOk",message:"AI returned code",data:{codeLength:fullCode.length,startsWith:fullCode.slice(0,60)},timestamp:Date.now()})}).catch(()=>{});
-          // #endregion
+          modelPackages = Array.isArray(data.requiredPackages) ? data.requiredPackages : []
         }
-      } else {
-        // #region agent log
-        fetch("http://127.0.0.1:7243/ingest/1559cb0d-dcd7-480b-95b9-729473f06d3d",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({runId:"run1",hypothesisId:"H4",location:"dashboard-context.tsx:triggerGeneration:aiNotOk",message:"AI response not ok",data:{status:response.status},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
       }
     } catch {
       // Keep fallback code when AI provider/network fails.
-      // #region agent log
-      fetch("http://127.0.0.1:7243/ingest/1559cb0d-dcd7-480b-95b9-729473f06d3d",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({runId:"run1",hypothesisId:"H4",location:"dashboard-context.tsx:triggerGeneration:catch",message:"AI request threw; using fallback",data:{fallbackLength:FALLBACK_GENERATED_CODE.length},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
     }
 
     setStreamingTargetCode(fullCode)
@@ -413,30 +478,37 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
           const writeRes = await fetch("/api/agent/files", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ path: targetFile, content: fullCode }),
+            body: JSON.stringify({ action: "write", path: targetFile, content: fullCode }),
           })
           if (writeRes.ok) {
-            const data = (await writeRes.json()) as { path: string; content: string }
+            const data = (await writeRes.json()) as {
+              path: string
+              content: string
+              requiredPackages?: string[]
+              missingPackages?: string[]
+            }
             setProjectFiles((prev) => ({ ...prev, [data.path]: data.content }))
-            // #region agent log
-            fetch("http://127.0.0.1:7243/ingest/1559cb0d-dcd7-480b-95b9-729473f06d3d",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({runId:"run1",hypothesisId:"H5",location:"dashboard-context.tsx:triggerGeneration:writeOk",message:"generated file persisted",data:{path:data.path,contentLength:data.content?.length ?? 0},timestamp:Date.now()})}).catch(()=>{});
-            // #endregion
+            const missing = Array.isArray(data.missingPackages) ? data.missingPackages : []
+            const mergedMissing = Array.from(new Set([...missing, ...modelPackages]))
+            if (mergedMissing.length > 0) {
+              setPendingInstallPackages(mergedMissing)
+              setExecutionState("pending_install_confirmation")
+            } else {
+              await runBuildPipeline()
+            }
           } else {
-            // #region agent log
-            fetch("http://127.0.0.1:7243/ingest/1559cb0d-dcd7-480b-95b9-729473f06d3d",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({runId:"run1",hypothesisId:"H5",location:"dashboard-context.tsx:triggerGeneration:writeNotOk",message:"generated file persist failed",data:{status:writeRes.status,targetFile},timestamp:Date.now()})}).catch(()=>{});
-            // #endregion
+            setExecutionState("error")
+            setExecutionError("Failed to write generated file to workspace.")
           }
         } catch {
-          // state already updated; write failed
-          // #region agent log
-          fetch("http://127.0.0.1:7243/ingest/1559cb0d-dcd7-480b-95b9-729473f06d3d",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({runId:"run1",hypothesisId:"H5",location:"dashboard-context.tsx:triggerGeneration:writeCatch",message:"generated file persist threw",data:{targetFile},timestamp:Date.now()})}).catch(()=>{});
-          // #endregion
+          setExecutionState("error")
+          setExecutionError("Failed to persist generated file.")
         }
         return
       }
       setStreamedCode(fullCode.slice(0, i))
     }, tickMs)
-  }, [mode, projectFiles, agentTask, agentState, agentLog])
+  }, [mode, projectFiles, agentTask, agentState, agentLog, runBuildPipeline])
 
   return (
     <DashboardContext.Provider
@@ -477,6 +549,12 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         terminalRunning,
         runCommand,
         clearTerminal,
+        executionState,
+        pendingInstallPackages,
+        executionError,
+        workspaceRoot,
+        runtimePreviewUrl,
+        resolveDependencyInstall,
         fixBuildError,
         fixingBuild,
       }}

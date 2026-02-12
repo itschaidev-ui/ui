@@ -319,6 +319,12 @@ export function PreviewPanel() {
     terminalRunning,
     runCommand,
     clearTerminal,
+    executionState,
+    pendingInstallPackages,
+    executionError,
+    workspaceRoot,
+    runtimePreviewUrl,
+    resolveDependencyInstall,
     fixBuildError,
     fixingBuild,
   } = useDashboard()
@@ -414,6 +420,23 @@ export function PreviewPanel() {
         </div>
 
         <div className={`flex items-center gap-2 text-[0.68rem] ${isLight ? "text-black/55" : "text-white/60"}`}>
+          <span
+            className={`rounded-full px-2.5 py-1 font-medium ${
+              executionState === "ready"
+                ? isLight
+                  ? "bg-emerald-100 text-emerald-700"
+                  : "bg-emerald-500/20 text-emerald-200"
+                : executionState === "error"
+                  ? isLight
+                    ? "bg-rose-100 text-rose-700"
+                    : "bg-rose-500/20 text-rose-200"
+                  : isLight
+                    ? "bg-black/8 text-black/65"
+                    : "bg-white/12 text-white/70"
+            }`}
+          >
+            {executionState.replaceAll("_", " ")}
+          </span>
           <button
             type="button"
             className={`rounded-full px-3 py-1 ${
@@ -437,7 +460,7 @@ export function PreviewPanel() {
             onClick={() => {
               const path = activeFilePath
               const content = activeCode || codeToShow
-              if (path && content) void fixBuildError(path, content)
+              if (path && content) void fixBuildError(path, content, executionError ?? undefined)
             }}
           >
             {fixingBuild ? "Fixing…" : "Fix"}
@@ -471,13 +494,60 @@ export function PreviewPanel() {
         }`}
       >
         {tab === "preview" ? (
-          <LivePreviewSurface
-            prompt={previewTitle}
-            generatedCode={generatedCode}
-            streamedCode={streamedCode}
-            isGenerating={isGenerating}
-            isLight={isLight}
-          />
+          runtimePreviewUrl ? (
+            <iframe title="Sandbox preview" src={runtimePreviewUrl} className="h-full w-full border-0" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center p-6">
+              <div
+                className={`max-w-xl rounded-xl border p-4 text-sm ${
+                  isLight ? "border-black/12 bg-white/80 text-black/75" : "border-white/12 bg-black/30 text-white/75"
+                }`}
+              >
+                <p className="font-medium">
+                  {executionState === "ready"
+                    ? "Build completed. Runtime preview URL is not available yet."
+                    : executionState === "pending_install_confirmation"
+                      ? "Waiting for dependency install confirmation."
+                      : executionState === "installing"
+                        ? "Installing dependencies in sandbox..."
+                        : executionState === "building"
+                          ? "Building sandbox project..."
+                          : executionState === "error"
+                            ? "Sandbox pipeline failed."
+                            : "Generate code to start the sandbox pipeline."}
+                </p>
+                {pendingInstallPackages.length > 0 && (
+                  <p className="mt-2 font-mono text-[0.72rem] break-words">
+                    Missing: {pendingInstallPackages.join(", ")}
+                  </p>
+                )}
+                {executionError && <p className="mt-2 text-[0.75rem] text-rose-400">{executionError}</p>}
+                {workspaceRoot && <p className="mt-2 text-[0.7rem] opacity-80">Workspace: {workspaceRoot}</p>}
+                {executionState === "pending_install_confirmation" && pendingInstallPackages.length > 0 && (
+                  <div className="mt-3 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void resolveDependencyInstall(true)}
+                      className={`rounded px-2.5 py-1 text-[0.72rem] font-medium ${
+                        isLight ? "bg-black text-white hover:bg-black/85" : "bg-white text-black hover:bg-white/85"
+                      }`}
+                    >
+                      Install
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void resolveDependencyInstall(false)}
+                      className={`rounded px-2.5 py-1 text-[0.72rem] ${
+                        isLight ? "border border-black/15 hover:bg-black/5" : "border border-white/20 hover:bg-white/10"
+                      }`}
+                    >
+                      Decline
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )
         ) : tab === "terminal" ? (
           <div className="flex h-full min-h-0 flex-col overflow-hidden p-3">
             <div className="mb-2 flex items-center gap-2">

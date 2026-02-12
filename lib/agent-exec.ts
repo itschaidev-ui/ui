@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process"
-import path from "node:path"
-import os from "node:os"
 import fs from "node:fs/promises"
+import os from "node:os"
+import path from "node:path"
 
 export type AgentExecChunk =
   | { type: "stdout"; text: string }
@@ -10,8 +10,10 @@ export type AgentExecChunk =
   | { type: "error"; message: string }
 
 export type AgentExecOptions = {
-  /** Working directory inside the agent sandbox root. */
+  /** Working directory inside the sandbox root. */
   cwd?: string
+  /** Override default sandbox root. */
+  sandboxRoot?: string
   /** Kills the process after this many ms. */
   timeoutMs?: number
   /** Optional environment overrides. */
@@ -20,7 +22,7 @@ export type AgentExecOptions = {
 
 const DEFAULT_TIMEOUT_MS = 60_000
 
-function getSandboxRoot() {
+function getDefaultSandboxRoot() {
   return path.join(os.tmpdir(), "sparkle-ui-agent")
 }
 
@@ -28,12 +30,13 @@ async function ensureDir(p: string) {
   await fs.mkdir(p, { recursive: true })
 }
 
-function resolveSafeCwd(cwd?: string) {
-  const root = getSandboxRoot()
+function resolveSafeCwd(root: string, cwd?: string) {
   const resolved = cwd ? path.resolve(root, cwd) : root
   const rel = path.relative(root, resolved)
-  const isInside = rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel))
-  return isInside ? resolved : root
+  if (!(rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel)))) {
+    throw new Error("cwd is outside sandbox root")
+  }
+  return resolved
 }
 
 /**
@@ -46,9 +49,9 @@ export async function agentExec(
   onChunk: (chunk: AgentExecChunk) => void,
   options: AgentExecOptions = {}
 ) {
-  const root = getSandboxRoot()
+  const root = options.sandboxRoot ? path.resolve(options.sandboxRoot) : getDefaultSandboxRoot()
   await ensureDir(root)
-  const safeCwd = resolveSafeCwd(options.cwd)
+  const safeCwd = resolveSafeCwd(root, options.cwd)
   await ensureDir(safeCwd)
 
   const child = spawn(command, args, {

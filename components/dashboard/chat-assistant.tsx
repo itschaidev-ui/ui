@@ -481,6 +481,10 @@ export function ChatAssistant() {
     setAgentState,
     appendAgentLog,
     resetAgentSession,
+    executionState,
+    pendingInstallPackages,
+    executionError,
+    resolveDependencyInstall,
   } = useDashboard()
   const { data: session } = useSession()
   const { resolvedTheme } = useTheme()
@@ -500,6 +504,7 @@ export function ChatAssistant() {
   const [agentProgressById, setAgentProgressById] = useState<Record<number, AgentProgressState>>({})
   const progressTimersRef = useRef<Record<number, ReturnType<typeof setTimeout>[]>>({})
   const [agentStatePanelOpen, setAgentStatePanelOpen] = useState(false)
+  const statusKeyRef = useRef("")
 
   const refs = ASSISTANT_MODES[mode]
   const isLight = resolvedTheme === "light"
@@ -596,13 +601,7 @@ export function ChatAssistant() {
   useEffect(() => {
     if (!isGenerating && generatedCode && generatingMsgId !== null) {
       const writtenPath = lastGeneratedFilePath ?? pendingFileRef.current
-      const finalReply = `Implemented and saved ${writtenPath}.`
-      const badImportPattern = /@sparkle-ui|sparkle-ui\/core|sparkle-ui\/button/i
-      const hasBadImportInReply = badImportPattern.test(finalReply)
-      const hasBadImportInCode = badImportPattern.test(generatedCode)
-      // #region agent log
-      fetch("http://127.0.0.1:7243/ingest/1559cb0d-dcd7-480b-95b9-729473f06d3d",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({runId:"run1",hypothesisId:"H6",location:"chat-assistant.tsx:generationComplete",message:"generation completed; comparing chat reply vs generated code",data:{writtenPath,hasBadImportInReply,hasBadImportInCode,replyHead:finalReply.slice(0,80),codeHead:generatedCode.slice(0,80)},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
+      const finalReply = `Wrote ${writtenPath} to your sandbox. Running dependency/build checks next.`
       setAgentState("finalizing")
       appendAgentLog("File created", writtenPath)
       setAgentProgressById((prev) => {
@@ -668,6 +667,27 @@ export function ChatAssistant() {
       )
     }
   }, [isGenerating, generatedCode, lastGeneratedFilePath, generatingMsgId, persistMessages, setAgentState, appendAgentLog])
+
+  useEffect(() => {
+    if (mode !== "agent") return
+    const statusMap: Record<string, string> = {
+      pending_install_confirmation: `Dependency confirmation required: ${pendingInstallPackages.join(", ")}`,
+      installing: "Installing dependencies in sandbox...",
+      building: "Running sandbox build...",
+      ready: "Sandbox build succeeded.",
+      error: executionError || "Sandbox pipeline failed.",
+    }
+    const text = statusMap[executionState]
+    if (!text) return
+    const nextKey = `${executionState}:${text}`
+    if (statusKeyRef.current === nextKey) return
+    statusKeyRef.current = nextKey
+    setMessages((prev) => {
+      const next = [...prev, { id: Date.now(), role: "assistant", text, kind: "status" as const }]
+      persistMessages(next)
+      return next
+    })
+  }, [executionState, pendingInstallPackages, executionError, mode, persistMessages])
 
   const handleSend = async (value?: string) => {
     const trimmed = (value ?? input).trim()
@@ -1115,6 +1135,37 @@ export function ChatAssistant() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {mode === "agent" && executionState === "pending_install_confirmation" && pendingInstallPackages.length > 0 && (
+        <div
+          className={`mb-3 rounded-xl border p-3 text-[0.72rem] ${
+            isLight ? "border-black/12 bg-amber-50 text-black/75" : "border-amber-400/30 bg-amber-400/10 text-amber-100"
+          }`}
+        >
+          <p className="font-medium">Install missing dependencies?</p>
+          <p className="mt-1 break-words font-mono">{pendingInstallPackages.join(", ")}</p>
+          <div className="mt-2 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void resolveDependencyInstall(true)}
+              className={`rounded-md px-2.5 py-1 text-[0.68rem] font-medium ${
+                isLight ? "bg-black text-white hover:bg-black/85" : "bg-white text-black hover:bg-white/85"
+              }`}
+            >
+              Install and continue
+            </button>
+            <button
+              type="button"
+              onClick={() => void resolveDependencyInstall(false)}
+              className={`rounded-md px-2.5 py-1 text-[0.68rem] ${
+                isLight ? "border border-black/15 hover:bg-black/5" : "border border-white/20 hover:bg-white/10"
+              }`}
+            >
+              Skip install
+            </button>
+          </div>
         </div>
       )}
 

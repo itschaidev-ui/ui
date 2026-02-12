@@ -1,74 +1,201 @@
-import path from "node:path"
 import fs from "node:fs/promises"
+import path from "node:path"
 
-const DATA_DIR = path.join(process.cwd(), "data", "generated")
-const ALLOWED_EXT = new Set([".tsx", ".ts", ".jsx", ".js", ".css", ".json", ".md"])
+const WORKSPACES_ROOT =
+  process.env.GENERATED_WORKSPACES_ROOT ||
+  path.join(process.cwd(), "data", "generated-workspaces")
 
-function getFilePath(userId: string): string {
-  return path.join(DATA_DIR, `${userId}.json`)
+const ALLOWED_EXT = new Set([".tsx", ".ts", ".jsx", ".js", ".css", ".json", ".md", ".mjs", ".cjs", ".yaml", ".yml"])
+const DEFAULT_ENTRY_FILE = "src/App/page.tsx"
+
+type PackageJsonLike = {
+  name?: string
+  private?: boolean
+  version?: string
+  scripts?: Record<string, string>
+  dependencies?: Record<string, string>
+  devDependencies?: Record<string, string>
 }
 
-function isAllowedPath(relativePath: string): boolean {
-  const normalized = path.normalize(relativePath).replace(/^(\.\/)+/, "")
-  if (normalized.startsWith("..") || path.isAbsolute(normalized)) return false
-  return ALLOWED_EXT.has(path.extname(normalized).toLowerCase())
+function sanitizeUserId(userId: string) {
+  return userId.replace(/[^a-zA-Z0-9_-]/g, "_")
 }
 
-export type GeneratedFilesStore = Record<string, string>
+function normalizeRelativePath(relativePath: string): string {
+  return path.normalize(relativePath).replace(/^(\.\/)+/, "").split(path.sep).join("/")
+}
 
-async function readStore(userId: string): Promise<GeneratedFilesStore> {
-  await fs.mkdir(DATA_DIR, { recursive: true })
-  const filePath = getFilePath(userId)
+function assertAllowedPath(relativePath: string) {
+  const normalized = normalizeRelativePath(relativePath)
+  if (!normalized || normalized.startsWith("..") || path.isAbsolute(normalized)) {
+    throw new Error("Path outside workspace")
+  }
+  const ext = path.extname(normalized).toLowerCase()
+  if (!ALLOWED_EXT.has(ext)) {
+    throw new Error(`File extension not allowed: ${ext || "(none)"}`)
+  }
+  return normalized
+}
+
+function workspaceDir(userId: string) {
+  return path.join(WORKSPACES_ROOT, sanitizeUserId(userId))
+}
+
+function resolveInsideWorkspace(userId: string, relativePath: string) {
+  const root = workspaceDir(userId)
+  const normalized = assertAllowedPath(relativePath)
+  const full = path.resolve(root, normalized)
+  const rel = path.relative(root, full)
+  if (rel.startsWith("..") || path.isAbsolute(rel)) throw new Error("Path outside workspace")
+  return { root, full, relative: normalized }
+}
+
+const DEFAULT_PACKAGE_JSON: PackageJsonLike = {
+  name: "sandbox-app",
+  private: true,
+  version: "0.0.1",
+  scripts: {
+    build: 'node -e "console.log(\'sandbox build completed\')"',
+    dev: 'node -e "console.log(\'sandbox dev started\')"',
+  },
+  dependencies: {
+    "@chaidev/ui": "^0.3.0",
+    react: "^19.2.3",
+    "react-dom": "^19.2.3",
+  },
+}
+
+const DEFAULT_ENTRY_CODE = `import { SparkleButton } from "@chaidev/ui"
+
+export default function App() {
+  return (
+    <div className="min-h-screen grid place-items-center bg-slate-950">
+      <SparkleButton text="Click me" />
+    </div>
+  )
+}
+`
+
+async function ensureWorkspaceScaffold(userId: string): Promise<void> {
+  const root = workspaceDir(userId)
+  await fs.mkdir(root, { recursive: true })
+  const packagePath = path.join(root, "package.json")
+  const entryPath = path.join(root, DEFAULT_ENTRY_FILE)
+
   try {
-    const raw = await fs.readFile(filePath, "utf-8")
-    const data = JSON.parse(raw) as { files?: GeneratedFilesStore }
-    return typeof data.files === "object" && data.files !== null ? data.files : {}
+    await fs.access(packagePath)
   } catch {
-    return {}
+    await fs.writeFile(packagePath, JSON.stringify(DEFAULT_PACKAGE_JSON, null, 2), "utf-8")
+  }
+
+  try {
+    await fs.access(entryPath)
+  } catch {
+    await fs.mkdir(path.dirname(entryPath), { recursive: true })
+    await fs.writeFile(entryPath, DEFAULT_ENTRY_CODE, "utf-8")
   }
 }
 
-async function writeStore(userId: string, files: GeneratedFilesStore): Promise<void> {
-  await fs.mkdir(DATA_DIR, { recursive: true })
-  const filePath = getFilePath(userId)
-  await fs.writeFile(filePath, JSON.stringify({ files }, null, 2), "utf-8")
+async function collectFiles(root: string, dir: string, out: string[]) {
+  const entries = await fs.readdir(dir, { withFileTypes: true })
+  for (const entry of entries) {
+    if (entry.name === "node_modules" || entry.name === ".git" || entry.name === ".next") continue
+    const full = path.join(dir, entry.name)
+    if (entry.isDirectory()) {
+      await collectFiles(root, full, out)
+      continue
+    }
+    const rel = normalizeRelativePath(path.relative(root, full))
+    if (ALLOWED_EXT.has(path.extname(rel).toLowerCase())) {
+      out.push(rel)
+    }
+  }
 }
 
-/**
- * List paths in the user's generated folder.
- */
+export async function getWorkspaceRoot(userId: string) {
+  await ensureWorkspaceScaffold(userId)
+  return workspaceDir(userId)
+}
+
 export async function listGeneratedFiles(userId: string): Promise<string[]> {
-  const files = await readStore(userId)
-  return Object.keys(files).sort()
+  const root = await getWorkspaceRoot(userId)
+  const files: string[] = []
+  await collectFiles(root, root, files)
+  return files.sort()
 }
 
-/**
- * Get all contents (for GET with no path).
- */
-export async function readAllGeneratedFiles(userId: string): Promise<{ files: string[]; contents: Record<string, string> }> {
-  const contents = await readStore(userId)
-  const files = Object.keys(contents).sort()
+export async function readAllGeneratedFiles(
+  userId: string
+): Promise<{ files: string[]; contents: Record<string, string> }> {
+  const files = await listGeneratedFiles(userId)
+  const contents: Record<string, string> = {}
+  await Promise.all(
+    files.map(async (file) => {
+      const { full } = resolveInsideWorkspace(userId, file)
+      contents[file] = await fs.readFile(full, "utf-8")
+    })
+  )
   return { files, contents }
 }
 
-/**
- * Read one file from the user's generated folder.
- */
 export async function readGeneratedFile(userId: string, relativePath: string): Promise<string> {
-  if (!isAllowedPath(relativePath)) throw new Error("Path not allowed")
-  const files = await readStore(userId)
-  const normalized = path.normalize(relativePath).replace(/^(\.\/)+/, "").split(path.sep).join("/")
-  return files[normalized] ?? ""
+  await ensureWorkspaceScaffold(userId)
+  const { full } = resolveInsideWorkspace(userId, relativePath)
+  return fs.readFile(full, "utf-8")
 }
 
-/**
- * Write one file; path is relative to the user's generated folder (e.g. src/App/page.tsx).
- */
 export async function writeGeneratedFile(userId: string, relativePath: string, content: string): Promise<string> {
-  if (!isAllowedPath(relativePath)) throw new Error("Path not allowed")
-  const normalized = path.normalize(relativePath).replace(/^(\.\/)+/, "").split(path.sep).join("/")
-  const files = await readStore(userId)
-  files[normalized] = content
-  await writeStore(userId, files)
+  await ensureWorkspaceScaffold(userId)
+  const { full } = resolveInsideWorkspace(userId, relativePath)
+  await fs.mkdir(path.dirname(full), { recursive: true })
+  await fs.writeFile(full, content, "utf-8")
   return content
+}
+
+export function getPackageNameFromImport(specifier: string): string | null {
+  if (!specifier || specifier.startsWith(".") || specifier.startsWith("/") || specifier.startsWith("@/")) return null
+  if (specifier.startsWith("@")) {
+    const parts = specifier.split("/")
+    if (parts.length < 2) return null
+    return `${parts[0]}/${parts[1]}`
+  }
+  return specifier.split("/")[0] || null
+}
+
+export function collectImportedPackages(code: string): string[] {
+  const regex =
+    /\bimport\s+(?:[^"'`]+\s+from\s+)?["'`]([^"'`]+)["'`]|\bimport\(\s*["'`]([^"'`]+)["'`]\s*\)|\brequire\(\s*["'`]([^"'`]+)["'`]\s*\)/g
+  const set = new Set<string>()
+  let match: RegExpExecArray | null
+  while ((match = regex.exec(code))) {
+    const spec = match[1] || match[2] || match[3]
+    const pkg = getPackageNameFromImport(spec)
+    if (pkg) set.add(pkg)
+  }
+  return [...set].sort()
+}
+
+export async function getWorkspacePackageJson(userId: string): Promise<PackageJsonLike> {
+  const root = await getWorkspaceRoot(userId)
+  const pkgPath = path.join(root, "package.json")
+  try {
+    const raw = await fs.readFile(pkgPath, "utf-8")
+    return JSON.parse(raw) as PackageJsonLike
+  } catch {
+    return { ...DEFAULT_PACKAGE_JSON }
+  }
+}
+
+export async function detectMissingPackagesForCode(
+  userId: string,
+  code: string
+): Promise<{ requiredPackages: string[]; missingPackages: string[] }> {
+  const requiredPackages = collectImportedPackages(code)
+  const pkgJson = await getWorkspacePackageJson(userId)
+  const installed = new Set<string>([
+    ...Object.keys(pkgJson.dependencies ?? {}),
+    ...Object.keys(pkgJson.devDependencies ?? {}),
+  ])
+  const missingPackages = requiredPackages.filter((pkg) => !installed.has(pkg))
+  return { requiredPackages, missingPackages }
 }

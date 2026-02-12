@@ -3,6 +3,7 @@ import path from "path"
 import { NextRequest, NextResponse } from "next/server"
 
 import { extractCodeBlock, normalizeUiImports } from "@/lib/code-parse"
+import { collectImportedPackages } from "@/lib/generated-files"
 
 type AiTask = "chat" | "code" | "fix"
 type AssistantMode = "conversation" | "agent"
@@ -289,7 +290,8 @@ export async function POST(request: NextRequest) {
       const result = await generateText(fixPrompt, systemPrompt)
       const rawCode = extractCodeBlock(result.text) || result.text.trim()
       const code = normalizeUiImports(rawCode || result.text)
-      return NextResponse.json({ code, path, provider: result.provider, model: result.model })
+      const requiredPackages = collectImportedPackages(code)
+      return NextResponse.json({ code, path, provider: result.provider, model: result.model, requiredPackages })
     }
 
     const prompt = body?.prompt?.trim() ?? ""
@@ -306,11 +308,10 @@ export async function POST(request: NextRequest) {
     if (task === "code") {
       const rawCode = extractCodeBlock(result.text) || result.text.trim()
       const code = normalizeUiImports(rawCode || result.text)
-      // #region agent log
-      fetch("http://127.0.0.1:7243/ingest/1559cb0d-dcd7-480b-95b9-729473f06d3d",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({runId:"run2",hypothesisId:"H8",location:"ai/route.ts:codeResult",message:"code generation result after prompt enhancement",data:{promptHead:prompt.slice(0,80),currentCodeLength:currentCode.length,resultLength:code.length,normalizedChanged:code!==rawCode,resultHead:code.slice(0,100)},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
+      const requiredPackages = collectImportedPackages(code)
       return NextResponse.json({
         code,
+        requiredPackages,
         provider: result.provider,
         model: result.model,
       })

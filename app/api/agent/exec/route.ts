@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server"
+import { getServerSession } from "next-auth"
+
+import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { agentExec } from "@/lib/agent-exec"
+import { getWorkspaceRoot } from "@/lib/generated-files"
 
 type ExecRequest = {
   /** e.g. "npm" */
   command: string
   /** e.g. ["--version"] */
   args?: string[]
-  /**
-   * Relative cwd within the agent sandbox root.
-   * If omitted, runs in sandbox root.
-   */
+  /** Relative cwd inside user's generated workspace. */
   cwd?: string
   /** Optional timeout; defaults to 60s. */
   timeoutMs?: number
@@ -21,6 +22,9 @@ function isAllowedCommand(cmd: string) {
 }
 
 export async function POST(req: Request) {
+  const session = await getServerSession(authOptions)
+  const userId = (session?.user as { id?: string })?.id ?? "anonymous"
+
   let body: ExecRequest
   try {
     body = (await req.json()) as ExecRequest
@@ -45,15 +49,18 @@ export async function POST(req: Request) {
         controller.enqueue(encoder.encode(`${JSON.stringify(obj)}\n`))
       }
 
-      write({ type: "start", command, args, cwd })
-
-      void agentExec(
-        command,
-        args,
-        (chunk) => {
-          write(chunk)
-        },
-        { cwd, timeoutMs }
+      void getWorkspaceRoot(userId).then(
+        (workspaceRoot) => {
+          write({ type: "start", command, args, cwd: cwd ?? ".", workspaceRoot })
+          return agentExec(
+            command,
+            args,
+            (chunk) => {
+              write(chunk)
+            },
+            { cwd, timeoutMs, sandboxRoot: workspaceRoot }
+          )
+        }
       ).then(
         () => controller.close(),
         (err) => {
