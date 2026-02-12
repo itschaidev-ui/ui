@@ -1,0 +1,21 @@
+/**
+ * Sunset Coding — UI pack theme
+ * Apply to your app for the same futuristic sunset vibe as the sparkle/ui dashboard.
+ * Usage: add data-theme-preview="sunset-coding" to <html> or import and use the classes below.
+ */
+
+:root.theme-preview-sunset-coding,
+[data-theme-preview="sunset-coding"] {
+  --ui-pack-bg-dark: radial-gradient(circle at 50% 72%, rgba(255,152,35,0.28), transparent 30%), radial-gradient(circle at 50% 40%, rgba(250,220,125,0.14), transparent 40%), radial-gradient(circle at top, #191922 0, #050509 58%, #020206 100%);
+  --ui-pack-bg-light: radial-gradient(circle at 50% 72%, rgba(255,160,85,0.18), transparent 30%), linear-gradient(180deg, #f5f2eb 0%, #ece8e3 100%);
+}
+
+[data-theme-preview="sunset-coding"].dark body,
+[data-theme-preview="sunset-coding"] body {
+  background: var(--ui-pack-bg-dark);
+  min-height: 100vh;
+}
+
+[data-theme-preview="sunset-coding"].light body {
+  background: var(--ui-pack-bg-light);
+}

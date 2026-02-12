@@ -1,6 +1,7 @@
 "use client"
 
 import type { AnchorHTMLAttributes, CSSProperties, ReactNode } from "react"
+import { Github } from "lucide-react"
 import "./social-media-button.css"
 
 export type SocialMediaPresetName =
@@ -145,7 +146,9 @@ export function SocialMediaButton({
       {showSweep ? <span className="ui-social-media-button__sweep" /> : null}
 
       <span className="ui-social-media-button__left">
-        <span className="ui-social-media-button__icon">{icon ?? <span className="ui-social-media-button__icon-fallback">S</span>}</span>
+        <span className="ui-social-media-button__icon">
+          {icon ?? (preset === "github" ? <Github size={18} strokeWidth={2} /> : <span className="ui-social-media-button__icon-fallback">S</span>)}
+        </span>
         <span className="ui-social-media-button__label">{resolvedLabel}</span>
       </span>
 

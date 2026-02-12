@@ -90,5 +90,47 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    transition: background 0.4s ease, color 0.3s ease;
   }
+}
+
+/* Site-wide Sunset Coding theme preview */
+[data-theme-preview="sunset-coding"].dark body,
+[data-theme-preview="sunset-coding"] body {
+  background: var(--ui-pack-bg-dark) !important;
+  min-height: 100vh;
+}
+
+[data-theme-preview="sunset-coding"].light body {
+  background: var(--ui-pack-bg-light) !important;
+}
+
+[data-theme-preview="sunset-coding"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  z-index: 0;
+}
+
+[data-theme-preview="sunset-coding"] body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.18;
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 0 1px,
+    transparent 1px 120px
+  );
+  z-index: 0;
+}
+
+[data-theme-preview="sunset-coding"] body > * {
+  position: relative;
+  z-index: 1;
 }

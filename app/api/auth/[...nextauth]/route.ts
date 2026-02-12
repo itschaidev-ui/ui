@@ -1,6 +1,7 @@
 import NextAuth from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 
+// Exported for use in API routes (e.g. getServerSession(authOptions))
 export const authOptions = {
   providers: [
     GoogleProvider({

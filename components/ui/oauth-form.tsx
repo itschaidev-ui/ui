@@ -110,6 +110,8 @@ export function OAuthForm({
 }
 
 const StyledWrapper = styled.div`
+  width: 100%;
+
   .ui-oauth-form {
     --background: #d3d3d3;
     --input-focus: #2d8cf0;
@@ -117,13 +119,13 @@ const StyledWrapper = styled.div`
     --font-color-sub: #666;
     --bg-color: #fff;
     --main-color: #323232;
-    padding: 20px;
+    padding: 24px;
     background: var(--background);
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     justify-content: center;
-    gap: 20px;
+    gap: 18px;
     border-radius: 5px;
     border: 2px solid var(--main-color);
     box-shadow: 4px 4px var(--main-color);
@@ -133,10 +135,11 @@ const StyledWrapper = styled.div`
     color: var(--font-color);
     font-weight: 700;
     font-size: 20px;
-    margin-bottom: 15px;
+    margin: 0;
     display: flex;
     flex-direction: column;
     line-height: 1.2;
+    align-self: flex-start;
   }
 
   .ui-oauth-form > p > span {
@@ -147,41 +150,45 @@ const StyledWrapper = styled.div`
 
   .separator {
     width: 100%;
+    max-width: 250px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 5px;
+    gap: 10px;
   }
 
   .separator > div {
-    width: 100px;
-    height: 3px;
-    border-radius: 5px;
+    flex: 1;
+    height: 2px;
+    border-radius: 2px;
     background-color: var(--font-color-sub);
   }
 
   .separator > span {
-    color: var(--font-color);
+    color: var(--font-color-sub);
     font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.05em;
   }
 
   .oauthButton {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 5px;
-    padding: 0 15px;
-    width: 250px;
-    height: 40px;
-    border-radius: 5px;
+    gap: 8px;
+    padding: 0 20px;
+    width: 100%;
+    max-width: 280px;
+    height: 44px;
+    border-radius: 8px;
     border: 2px solid var(--main-color);
     background-color: var(--bg-color);
-    box-shadow: 4px 4px var(--main-color);
-    font-size: 16px;
+    box-shadow: 0 4px 0 var(--main-color);
+    font-size: 15px;
     font-weight: 600;
     color: var(--font-color);
     cursor: pointer;
-    transition: all 250ms;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.25s ease;
     position: relative;
     overflow: hidden;
     z-index: 1;
@@ -196,8 +203,7 @@ const StyledWrapper = styled.div`
     width: 0;
     background-color: #212121;
     z-index: -1;
-    box-shadow: 4px 8px 19px -3px rgba(0, 0, 0, 0.27);
-    transition: all 250ms;
+    transition: width 0.25s ease;
   }
 
   .oauthButton:hover {
@@ -208,27 +214,47 @@ const StyledWrapper = styled.div`
     width: 100%;
   }
 
+  /* Click effect: press down (shadow shrinks, slight scale) */
+  .oauthButton:active {
+    transform: translateY(3px) scale(0.99);
+    box-shadow: 0 1px 0 var(--main-color);
+  }
+
+  .oauthButton:active::before {
+    width: 100%;
+  }
+
   .ui-oauth-form > input {
-    width: 250px;
-    height: 40px;
-    border-radius: 5px;
+    width: 100%;
+    max-width: 280px;
+    height: 44px;
+    border-radius: 8px;
     border: 2px solid var(--main-color);
     background-color: var(--bg-color);
-    box-shadow: 4px 4px var(--main-color);
+    box-shadow: 0 4px 0 var(--main-color);
     font-size: 15px;
     font-weight: 600;
     color: var(--font-color);
-    padding: 5px 10px;
+    padding: 0 14px;
     outline: none;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
   }
 
+  /* Type effect: focus ring + bottom border "fill" and subtle lift */
   .ui-oauth-form > input:focus {
     border-color: var(--input-focus);
+    box-shadow: 0 4px 0 var(--main-color), 0 0 0 3px rgba(45, 140, 240, 0.25);
+    transform: translateY(-1px);
+  }
+
+  /* Typing: subtle pulse on value change (via animation) */
+  .ui-oauth-form > input:not(:placeholder-shown) {
+    border-color: rgba(45, 140, 240, 0.6);
   }
 
   .icon {
-    width: 1.5rem;
-    height: 1.5rem;
+    width: 1.25rem;
+    height: 1.25rem;
     flex-shrink: 0;
   }
 `

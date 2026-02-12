@@ -97,7 +97,7 @@ export function GitHubStarButtonShowcase() {
       <section className="mt-6 rounded-2xl border border-[#1b1b1b] bg-[#0a0a0a] p-5">
         <p className="text-xs uppercase tracking-wide text-[#666]">Package Usage</p>
         <pre className="mt-3 overflow-x-auto rounded-lg border border-[#222] bg-[#070707] p-3 text-xs text-[#bfbfbf]">
-          <code>{`npm i @chaidev/ui
+          <code>{`sparkle-ui add github-star-button
 
 import "@chaidev/ui/styles.css"
 import { GitHubStarButton } from "@chaidev/ui"`}</code>

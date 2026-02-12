@@ -62,7 +62,7 @@ export function PillButtonShowcase() {
       <section className="mt-6 rounded-2xl border border-[#1b1b1b] bg-[#0a0a0a] p-5">
         <p className="text-xs uppercase tracking-wide text-[#666]">Package Usage</p>
         <pre className="mt-3 overflow-x-auto rounded-lg border border-[#222] bg-[#070707] p-3 text-xs text-[#bfbfbf]">
-          <code>{`npm i @chaidev/ui styled-components
+          <code>{`sparkle-ui add pill-button
 
 import { PillButton } from "@chaidev/ui"`}</code>
         </pre>

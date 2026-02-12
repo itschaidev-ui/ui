@@ -14,6 +14,21 @@ export type Pack = {
 
 export const PACKS: Pack[] = [
   {
+    id: "essential-pack",
+    name: "Essential Pack",
+    description: "Core sparkle/ui kit: signature buttons, badges, rating, tabs, and accordion.",
+    tier: "free",
+    componentIds: [
+      "sparkle-button",
+      "social-media-button",
+      "message-send-button",
+      "badge",
+      "sidebar-tabs",
+      "accordion",
+      "star-rating-radio",
+    ],
+  },
+  {
     id: "free-core",
     name: "Free Core",
     description: "Essential buttons, inputs, and data display components. Use in any project, no strings attached.",
