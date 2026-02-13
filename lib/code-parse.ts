@@ -12,7 +12,7 @@ export function extractCodeBlock(raw: string): string {
   const fenceRegex = /^```(?:tsx|jsx|ts|javascript|js)?\s*\n?([\s\S]*?)```/im
   const match = trimmed.match(fenceRegex)
   if (match?.[1] != null) {
-    return match[1].trimEnd()
+    return sanitizeCodeText(match[1])
   }
 
   // No fence: if content looks like code, use as-is (model returned raw code).
@@ -20,7 +20,7 @@ export function extractCodeBlock(raw: string): string {
     /^\s*(import\s|export\s|<\/?[A-Za-z][\w.-]*|function\s|const\s|let\s|class\s|interface\s|type\s)/m.test(
       trimmed
     )
-  if (looksLikeCode) return trimmed
+  if (looksLikeCode) return sanitizeCodeText(trimmed)
 
   // Try to find a block that starts with common code patterns (in case of mixed output).
   const codeStart = trimmed.search(
@@ -29,7 +29,7 @@ export function extractCodeBlock(raw: string): string {
   if (codeStart >= 0) {
     const fromCode = trimmed.slice(codeStart)
     const nextFence = fromCode.search(/\n```\s*$/m)
-    return (nextFence >= 0 ? fromCode.slice(0, nextFence) : fromCode).trimEnd()
+    return sanitizeCodeText(nextFence >= 0 ? fromCode.slice(0, nextFence) : fromCode)
   }
 
   return ""
@@ -47,7 +47,7 @@ export function getDisplayCode(raw: string): string {
     /^\s*(import\s|export\s|<\/?[A-Za-z][\w.-]*|function\s|const\s|let\s|class\s|interface\s|type\s)/m.test(
       trimmed
     )
-  return looksLikeCode ? trimmed : ""
+  return looksLikeCode ? sanitizeCodeText(trimmed) : ""
 }
 
 /**
@@ -55,7 +55,7 @@ export function getDisplayCode(raw: string): string {
  */
 export function normalizeUiImports(code: string): string {
   if (!code) return code
-  let out = code
+  let out = sanitizeCodeText(code)
     .replace(/from\s+["']@sparkle-ui\/button["']/g, `from "@chaidev/ui"`)
     .replace(/from\s+["']@sparkle-ui\/react["']/g, `from "@chaidev/ui"`)
     .replace(/from\s+["']@sparkle-ui\/ui["']/g, `from "@chaidev/ui"`)
@@ -108,4 +108,15 @@ export function normalizeUiImports(code: string): string {
   }
 
   return out
+}
+
+export function sanitizeCodeText(code: string): string {
+  if (!code) return ""
+  let out = code.replace(/\r\n?/g, "\n").trim()
+  out = out.replace(/^```(?:tsx|jsx|ts|javascript|js|typescript)?\s*\n?/i, "")
+  out = out.replace(/\n?```\s*$/i, "")
+
+  // Some model outputs leak a language token line (e.g. "typescript").
+  out = out.replace(/^\s*['"`]*\s*(typescript|tsx|jsx|javascript|js|ts)\s*['"`]*\s*\n/i, "")
+  return out.trim()
 }

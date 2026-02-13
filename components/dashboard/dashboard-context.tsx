@@ -244,19 +244,20 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     return exitCode
   }, [])
 
-  const runBuildPipeline = useCallback(async () => {
+  const runBuildPipeline = useCallback(async (previewPath?: string) => {
     setExecutionState("building")
     setExecutionError(null)
     const code = await runCommand("npm", ["run", "build"])
     if (code === 0) {
       setExecutionState("ready")
-      setRuntimePreviewUrl(null)
+      const target = previewPath || activeFilePath || "src/App/page.tsx"
+      setRuntimePreviewUrl(`/api/agent/runtime/preview?path=${encodeURIComponent(target)}&v=${Date.now()}`)
       return true
     }
     setExecutionState("error")
     setExecutionError("Build failed. Review terminal output and run Fix to repair code.")
     return false
-  }, [runCommand])
+  }, [runCommand, activeFilePath])
 
   const resolveDependencyInstall = useCallback(async (approved: boolean) => {
     if (!approved) {
@@ -311,7 +312,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
           setPendingInstallPackages(written.missingPackages)
           setExecutionState("pending_install_confirmation")
         } else {
-          await runBuildPipeline()
+          await runBuildPipeline(path)
         }
         return true
       } catch {
@@ -419,6 +420,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     setExecutionState("generating")
     setExecutionError(null)
     setPendingInstallPackages([])
+    setRuntimePreviewUrl(null)
     setGeneratingFile(targetFile)
     setGeneratedCode(null)
     setLastGeneratedFilePath(null)
@@ -494,7 +496,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
               setPendingInstallPackages(mergedMissing)
               setExecutionState("pending_install_confirmation")
             } else {
-              await runBuildPipeline()
+              await runBuildPipeline(targetFile)
             }
           } else {
             setExecutionState("error")
